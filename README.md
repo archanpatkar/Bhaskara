@@ -1,2 +1,2 @@
 # pclimb
-A precedence climbing LL(1) recursive descent expression parser 
+A precedence climbing expression evaluator using LL(1) and lazy graph reduction

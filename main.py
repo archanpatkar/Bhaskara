@@ -48,6 +48,7 @@ BinOp = namedtuple("Binary",["left","op","right"])
 UnOp = namedtuple("Unary",["op","value"])
 
 binaryops = ["+","-","*","/","^"]
+unaryops = ["-","+"]
 premap = {
     "+":1,
     "-":1,

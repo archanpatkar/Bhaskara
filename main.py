@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-### Precedence Climbing LR(1) Math expression parser
+### Precedence Climbing LR(1) Math expression parser and evaluator
 
 empty = [" ","\n","\r","\t"]
 def isWhite(str):
@@ -26,16 +26,9 @@ def parseNum(str,i,l):
             break
     return (int(buff),i,l)
 
-ops = ["+","-","/","*","(",")"]
-opsmap = {
-    "+":"add",
-    "-":"subs",
-    "*":"mul",
-    "/":"div",
-    "(":"lp",
-    ")":"rp"
-}
-Token = namedtuple("Token",["type","ch"])
+ops = ["+","-","/","*","(",")","^"]
+
+Token = namedtuple("Token",["type","val"])
 def tokenize(str):
     tokens = []
     i = 0
@@ -46,7 +39,7 @@ def tokenize(str):
             num,i,l = parseNum(str,i,l)
             tokens.append(Token("num",num))
         elif c in ops:
-            tokens.append(Token(opsmap[c],c))
+            tokens.append(Token(c,c))
         i+=1
     return tokens
 
@@ -54,12 +47,31 @@ Atom = namedtuple("Atom",["value"])
 BinOp = namedtuple("Binary",["left","op","right"])
 UnOp = namedtuple("Unary",["op","value"])
 
+binaryops = ["+","-","*","/","^"]
+premap = {
+    "+":1,
+    "-":1,
+    "*":2,
+    "/":2,
+    "^":3
+}
+
+def getNextAtom():
+    pass
+
 def parse(tokens):
-    return parseRec(tokens,0)
+    return parseRec(tokens.pop(0),0)
 
-def parseRec(tokens,min):
-    for t in tokens:
-        print(t)
-
+def parseRec(lhs,min,tokens):
+    lookahead = tokens[0]
+    while lookahead.type in binaryops and premap[lookahead.type] > min:
+        op = lookahead
+        rhs = tokens.pop(0)
+        lookahead = tokens[0]
+        while lookahead.type in binaryops and premap[lookahead.type] > premap[op.type]:
+            rhs = parseRec(rhs, premap[lookahead.type])
+            lookahead = tokens[0]
+        lhs = BinOp(lhs,op,rhs)
+    return lhs
 
 parse((tokenize("500 + 500 * 6")))

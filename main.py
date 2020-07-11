@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-### Precedence Climbing LL(1) Math expression parser
+### Precedence Climbing LR(1) Math expression parser
 
 empty = [" ","\n","\r","\t"]
 def isWhite(str):

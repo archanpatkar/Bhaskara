@@ -1,4 +1,5 @@
 from collections import namedtuple
+from pprint import pprint
 
 ### Precedence Climbing LR(1) Math expression parser and evaluator
 
@@ -57,22 +58,52 @@ premap = {
     "^":3
 }
 
-def getNextAtom():
-    pass
+def getNext(tokens):
+    if len(tokens) > 0:
+        return tokens.pop(0)
+    return None
 
 def parse(tokens):
-    return parseRec(tokens.pop(0),0)
+    token = getNext(tokens)
+    prev = None
+    while token != None:
+        current = None
+        if token.type == 'num':
+            current = Atom(token.val)
+        elif token.type in binaryops and prev != None:
+            current = {"type":"B", "left":prev, "op":token.type}
+        elif token.type in unaryops and prev == None:
+            current = {"type":"U", "op":token.type}
+        elif token.type == '(':
+            subt = []
+            token = getNext(tokens)
+            while token != None and token.type != ')':
+                subt.append(token)
+                token = getNext(tokens)
+            current = parse(subt)
+        if isinstance(prev,dict):
+            if prev["type"] == "B":
+                prev = BinOp(prev["left"],prev["op"],current)
+            elif prev["type"] == "U":
+                prev = UnOp(prev["op"],current)
+        else:
+            prev = current
+        token = getNext(tokens)
+    return prev
 
-def parseRec(lhs,min,tokens):
-    lookahead = tokens[0]
-    while lookahead.type in binaryops and premap[lookahead.type] > min:
-        op = lookahead
-        rhs = tokens.pop(0)
-        lookahead = tokens[0]
-        while lookahead.type in binaryops and premap[lookahead.type] > premap[op.type]:
-            rhs = parseRec(rhs, premap[lookahead.type])
-            lookahead = tokens[0]
-        lhs = BinOp(lhs,op,rhs)
-    return lhs
+# def parse(tokens):
+#     return parseRec(tokens.pop(0),0)
 
-parse((tokenize("500 + 500 * 6")))
+# def parseRec(lhs,min,tokens):
+#     lookahead = tokens[0]
+#     while lookahead.type in binaryops and premap[lookahead.type] > min:
+#         op = lookahead
+#         rhs = tokens.pop(0)
+#         lookahead = tokens[0]
+#         while lookahead.type in binaryops and premap[lookahead.type] > premap[op.type]:
+#             rhs = parseRec(rhs, premap[lookahead.type])
+#             lookahead = tokens[0]
+#         lhs = BinOp(lhs,op,rhs)
+#     return lhs
+
+print(parse((tokenize("-500 + (500 * 6)"))))

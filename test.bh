@@ -1,0 +1,17 @@
+(-500) * 500 + 6
+x := !(T | F) & ~F & 5 > 5
+
+def f1(x) = x^10
+def f2(y) = {
+    z := x + f1(y)*10
+    sin(z & false)
+}
+
+k = [10,20,30,40]
+
+def f3(x) = {
+    match 
+    case x == 10 then x 
+    case x == 0 then (x+3)*3
+    default x+2 
+}

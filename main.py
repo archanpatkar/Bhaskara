@@ -24,7 +24,11 @@ def parseNum(str,i,l):
     i += 1
     while i < l:
         c = str[i]
-        if isNumber(c) or (not(decimal) and c == "."):
+        if isNumber(c):
+            buff += c
+            i += 1
+        elif c == "." and not(decimal):
+            decimal = True
             buff += c
             i += 1
         else:
@@ -117,7 +121,8 @@ token_name = {
     "]":"RSQB",
     "{":"LCURL",
     "}":"RCURL",
-    ":=":"VAR"
+    ":=":"VAR",
+    "//":"COMM"
 }
 
 def isNext(ch,str,i):
@@ -166,6 +171,12 @@ def tokenize(str):
             elif c == ":" and isNext("=",str,i):
                 joinNext(c,str,i,tokens)
                 i += 1
+            elif c == "/" and isNext("/",str,i):
+                i += 2
+                c = str[i]
+                while not(isWhite(c)) and i < l:
+                    i += 1
+                    c = str[i]
             else:
                 tokens.append(Token(token_name[c],c))
         elif isIdentifier(c):

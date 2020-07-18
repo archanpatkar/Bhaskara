@@ -3,7 +3,7 @@ from os import sys
 from pprint import pprint
 from collections import namedtuple
 
-# Math and Logic DSL
+# भास्कर - A Math and Logic DSL
 # Parser and Evaluator based on Precedence Climbing LR(1) Algorithm
 # Based on: http://www.engr.mun.ca/~theo/Misc/exp_parsing.htm
 empty = [" ","\r","\t"]
@@ -31,7 +31,9 @@ def parseNum(str,i,l):
             break
     return (int(buff),i,l)
 
-bools = ["T","F"]
+bools = ["T","F","U","B"]
+U = None
+B = (True,False)
 def isBool(str):
     if str in bools:
         return True
@@ -40,29 +42,41 @@ def isBool(str):
 ops = [
         "+","-","/","*","(",")","^","=","|","&","~","@",
         "#","==",">","<",">=","<=","~=","[","]","{","}",
-        ",","->",";"
+        ",","->",";","%","!",":"
     ]
-keywords = ["true","false","if","then","else","def","U","B"]
+keywords = ["true","false","if","then","else","def"]
 token_name = {
     "+":"ADD",
     "-":"SUBS",
     "/":"DIV",
     "*":"MUL",
+    "%":"MOD",
     "(":"LPAREN",
     ")":"RPAREN",
     "^":"EXP",
     "|":"OR",
     "&":"AND",
     "~":"NOT",
+    "->":"IMP",
     "=":"ASGN",
     ">":"GT",
     "<":"LT",
+    "==":"EQ",
+    ">=":"GTEQ",
+    "<=":"LTEQ",
+    "~=":"NOTEQ",
     "if":"IF",
     "then":"THEN",
     "else":"ELSE",
     "def":"DEF",
     ",":"SEP",
-    ";":"SEMI"
+    ";":"SEMI",
+    "@":"FORALL",
+    "#":"EXISTS",
+    "[":"LSQBRAC",
+    "]":"RSQBRAC",
+    "{":"LCUBRAC",
+    "}":"RCUBRAC",
 }
 
 Token = namedtuple("Token",["type","val"])
@@ -70,6 +84,7 @@ def tokenize(str):
     tokens = []
     i = 0
     l = len(str)
+    buff = ""
     while i < l:
         c = str[i]
         if isNumber(c):
@@ -81,7 +96,33 @@ def tokenize(str):
             else:
                 tokens.append(Token("BOOL",False))
         elif c in ops:
-            tokens.append(Token(token_name[c],c))
+            if c == "=":
+                if str[i+1] == "=":
+                    c = c+str[i+1]
+                    tokens.append(Token(token_name[c],c))
+                    i += 1
+            elif c == ">":
+                if str[i+1] == "=":
+                    c = c+str[i+1]
+                    tokens.append(Token(token_name[c],c))
+                    i += 1
+            elif c == "<":
+                if str[i+1] == "=":
+                    c = c+str[i+1]
+                    tokens.append(Token(token_name[c],c))
+                    i += 1
+            elif c == "~":
+                if str[i+1] == "=":
+                    c = c+str[i+1]
+                    tokens.append(Token(token_name[c],c))
+                    i += 1
+            elif c == "-":
+                if str[i+1] == ">":
+                    c = c+str[i+1]
+                    tokens.append(Token(token_name[c],c))
+                    i += 1
+            else:
+                tokens.append(Token(token_name[c],c))
         elif c in keywords:
             tokens.append(Token(token_name[c],c))
         elif c == "\n" or c == ";":
@@ -101,16 +142,22 @@ unaryops = ["SUBS","ADD","NOT"]
 opconfig = {
     "OR":(1,1),
     "AND":(2,1),
-    "LT":(3,1),
-    "GT":(3,1),
-    "ADD":(4,1),
-    "SUBS":(4,1),
-    "MUL":(5,1),
-    "DIV":(5,1),
-    "EXP":(6,0),
-    "NEG":(7,0),
-    "POS":(7,0),
-    "NOT":(7,0)
+    "IMP":(2,1),
+    "EQ":(3,1),
+    "NOTEQ":(3,1),
+    "LT":(4,1),
+    "LTEQ":(4,1),
+    "GTEQ":(4,1),
+    "GT":(4,1),
+    "ADD":(5,1),
+    "SUBS":(5,1),
+    "MUL":(6,1),
+    "MOD":(6,1),
+    "DIV":(6,1),
+    "EXP":(7,0),
+    "NEG":(8,0),
+    "POS":(8,0),
+    "NOT":(8,0)
 }
 
 swap = {
@@ -192,7 +239,7 @@ opmap = {
     "EXP": math.pow
 }
 
-bool_ops = ["NOT","AND","OR"]
+bool_ops = ["NOT","AND","OR",""]
 num_ops = ["ADD","SUBS","DIV","MUL","EXP","NEG","POS"]
 
 def coerse(op,*params):

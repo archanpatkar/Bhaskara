@@ -8,10 +8,16 @@ def f2(y) = {
 }
 
 k = [10,20,30,40]
+j = [1,2,3]
+print(mean(k))
+
+z := (@x in k,#y in j) that p(x) & m(y) | m(x) 
+
+x := (#f) in k that m(k)
 
 def f3(x) = {
-    match 
-    case x == 10 then x 
-    case x == 0 then (x+3)*3
+    match x
+    case 10 then x 
+    case 0 then (x+3)*3
     default x+2 
 }

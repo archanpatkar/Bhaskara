@@ -29,22 +29,53 @@ def parseNum(str,i,l):
         else:
             i -= 1
             break
-    return (int(buff),i,l)
+    return (Token("NUM",int(buff)),i)
 
-bools = ["T","F","U","B"]
-U = None
+bools = ["T","F","N","B"]
+N = None
 B = (True,False)
 def isBool(str):
     if str in bools:
         return True
     return False
 
+def isIdentifier(str):
+    n = ord(str)
+    if  (n >= ord('a') and n <= ord('z')) or (n >= ord('A') and n <= ord('Z')) or str == "_":
+        return True
+    return False
+
+def isKeyword(str):
+    if str in keywords:
+        return True
+    return False
+
+def createKeyword(buff):
+    pass
+
+def parseIdentifier(str,i,l):
+    buff = "" + str[i]
+    i += 1
+    while i < l:
+        c = str[i]
+        print(c)
+        if isIdentifier(c) or isNumber(c):
+            buff += c
+            i += 1
+        else:
+            i -= 1
+            break
+        if isKeyword(buff):
+            return (createKeyword(buff),i)
+    return (Token("IDEN",buff),i)
+
+
 ops = [
         "+","-","/","*","(",")","^","=","|","&","~","@",
         "#","==",">","<",">=","<=","~=","[","]","{","}",
-        ",","->",";","%","!",":"
+        ",","->","%","!",":"
     ]
-keywords = ["true","false","if","then","else","def"]
+keywords = ["true","false","niether","both","if","then","else","def"]
 token_name = {
     "+":"ADD",
     "-":"SUBS",
@@ -73,11 +104,22 @@ token_name = {
     ";":"SEMI",
     "@":"FORALL",
     "#":"EXISTS",
-    "[":"LSQBRAC",
-    "]":"RSQBRAC",
-    "{":"LCUBRAC",
-    "}":"RCUBRAC",
+    "[":"LSQB",
+    "]":"RSQB",
+    "{":"LCURL",
+    "}":"RCURL",
 }
+
+def isNext(ch,str,i):
+    if isinstance(ch,function):
+        return ch(str[i+1])
+    if str[i+1] == ch:
+        return True
+    return False
+    
+def joinNext(ch,str,i,tokens):
+    j = ch+str[i+1]
+    tokens.append(Token(token_name[j],j))
 
 Token = namedtuple("Token",["type","val"])
 def tokenize(str):
@@ -88,45 +130,36 @@ def tokenize(str):
     while i < l:
         c = str[i]
         if isNumber(c):
-            num,i,l = parseNum(str,i,l)
-            tokens.append(Token("NUM",num))
-        elif isBool(c):
+            num,i = parseNum(str,i,l)
+            tokens.append(num)
+        elif isBool(c) and not(isNext(isIdentifier,str,i)) and not(isNext(isNumber,str,i)):
             if c == "T":
                 tokens.append(Token("BOOL",True))
             else:
                 tokens.append(Token("BOOL",False))
         elif c in ops:
-            if c == "=":
-                if str[i+1] == "=":
-                    c = c+str[i+1]
-                    tokens.append(Token(token_name[c],c))
-                    i += 1
-            elif c == ">":
-                if str[i+1] == "=":
-                    c = c+str[i+1]
-                    tokens.append(Token(token_name[c],c))
-                    i += 1
-            elif c == "<":
-                if str[i+1] == "=":
-                    c = c+str[i+1]
-                    tokens.append(Token(token_name[c],c))
-                    i += 1
-            elif c == "~":
-                if str[i+1] == "=":
-                    c = c+str[i+1]
-                    tokens.append(Token(token_name[c],c))
-                    i += 1
-            elif c == "-":
-                if str[i+1] == ">":
-                    c = c+str[i+1]
-                    tokens.append(Token(token_name[c],c))
-                    i += 1
+            if c == "=" and isNext("=",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
+            elif c == ">" and isNext("=",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
+            elif c == "<" and isNext("=",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
+            elif c == "~" and isNext("=",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
+            elif c == "-" and isNext("=",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
             else:
                 tokens.append(Token(token_name[c],c))
-        elif c in keywords:
-            tokens.append(Token(token_name[c],c))
+        elif isIdentifier(c):
+            t,i = parseIdentifier(str,i,l)
+            tokens.append(t)
         elif c == "\n" or c == ";":
-            tokens.append(Token("LINEEND",c))
+            tokens.append(Token("LINEEND",c))            
         i+=1
     # tokens.append(Token("EOF",""))
     return tokens
@@ -137,7 +170,13 @@ def BinOp(op,left,right):
 def UnOp(op,value):
     return { "type":"Unary", "op":op, "right":value, "reduced":False }
 
-binaryops = ["ADD","SUBS","DIV","MUL","EXP","OR","AND","LT","GT"]
+def Atom(value):
+    return { "type":"Atom", "value":value }
+
+binaryops = [
+                "ADD","SUBS","DIV","MUL","EXP","OR","AND",
+                "LT","GT","EQ","IMP","NOTEQ","LTEQ","GTEQ"
+            ]
 unaryops = ["SUBS","ADD","NOT"]
 opconfig = {
     "OR":(1,1),
@@ -184,7 +223,6 @@ def parse(tokens):
     return exps
 
 def exp(min,tokens):
-    print(tokens)
     lhs = term(tokens)
     lookahead = peekNext(tokens)
     while (lookahead != None) and (lookahead.val != "\n") and (lookahead.type in binaryops) and (opconfig[lookahead.type][0] >= min):
@@ -218,7 +256,9 @@ def term(tokens):
     elif current.type == "BOOL":
         getNext(tokens)
         return current.val
-    elif current.type == "WHITE":
+    elif current.type == "IDEN":
+        return Atom(getNext(tokens).val)
+    elif current.type == "LINEEND":
         return current
     else:
         print("Unexpected Error")
@@ -228,6 +268,7 @@ opmap = {
     "ADD": lambda x,y: x + y,
     "SUBS": lambda x,y: x - y,
     "MUL": lambda x,y: x * y,
+    "MOD": lambda x,y: x % y,
     "DIV": lambda x,y: x / y,
     "NEG": lambda x: -x,
     "POS": lambda x: +x,
@@ -236,6 +277,11 @@ opmap = {
     "OR": lambda x,y: x or y,
     "LT": lambda x,y: x < y,
     "GT": lambda x,y: x > y,
+    "EQ": lambda x,y: x == y,
+    "GTEQ":lambda x,y: x >= y,
+    "LTEQ":lambda x,y: x <= y,
+    "NOTEQ": lambda x,y: x != y,
+    "IMP": lambda x,y: not(x) or y,
     "EXP": math.pow
 }
 
@@ -264,6 +310,9 @@ def coerse(op,*params):
                 temp.append(p)
     return temp
 
+def astToExp(ast):
+    pass
+
 def eval(ast):
     if isinstance(ast,list):
         outcome = []
@@ -285,11 +334,18 @@ def eval(ast):
     else:
         return ast
 
-tokens = tokenize("(T | F) & ~F & 5 > 5")
-print(tokens)
+
+tokens = tokenize("archan_1 + 5 & jagrat -> boy")
+pprint(tokens,indent=4)
 ast = parse(tokens)
 pprint(ast,indent=4)
-print(eval(ast))
+
+
+# tokens = tokenize("(T | F) & ~F & 10 > 5 & (~F == T)")
+# pprint(tokens,indent=4)
+# ast = parse(tokens)
+# pprint(ast,indent=4)
+# print(eval(ast))
 
 # tokens = tokenize("(-500)*500+6")
 # print(tokens)

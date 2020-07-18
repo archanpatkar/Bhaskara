@@ -19,17 +19,22 @@ def isNumber(str):
     return False 
 
 def parseNum(str,i,l):
+    decimal = False
     buff = "" + str[i]
     i += 1
     while i < l:
         c = str[i]
-        if isNumber(c):
+        if isNumber(c) or (not(decimal) and c == "."):
             buff += c
             i += 1
         else:
             i -= 1
             break
-    return (Token("NUM",int(buff)),i)
+    if decimal:
+        buff = float(buff)
+    else:
+        buff = int(buff)
+    return (Token("NUM",buff),i)
 
 bools = ["T","F","N","B"]
 N = None
@@ -230,12 +235,13 @@ def parse(tokens):
             exps.append(out)
     return exps
 
+FLAG_IGNORE_LN = False
+
 def verify(op,lhs,rhs):
     if op.type == "VAR" or op.type == "ASSGN":
         if not(lhs["type"] == "Atom"):
             print("Expected Identifier")
             sys.exit(1)
-        
 
 def exp(min,tokens):
     lhs = term(tokens)
@@ -350,16 +356,20 @@ class Env(dict):
             print("Error: Cannot update non-existant variable -->",var)
             sys.exit(1)
 
-
 def std_env():
     env = Env()
     env.update(vars(math))
     env.update({
         "print":print,
-        "abs":abs
+        "abs":abs,
+        "archan_1":True,
+        "jagrat":True,
+        "boy":True
     })
 
-def eval(ast,env=std_env(("archan_1","jagrat","boy"),(True,True,True))):
+ROOT = std_env()
+
+def eval(ast,env=ROOT):
     if isinstance(ast,list):
         outcome = []
         for exp in ast:

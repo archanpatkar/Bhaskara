@@ -1,14 +1,15 @@
-(-500) * 500 + 6
 x := !(T | F) & ~F & 5 > 5
+x = (-500) * 500 + 6
 
 def f1(x) = x^10
 def f2(y) = {
     z := x + f1(y)*10
-    sin(z & false)
+    sin((z & false)+1)
 }
+print(f2(10))
 
-k = [10,20,30,40]
-j = [1,2,3]
+k := [10,20,30,40]
+j := [1,2,3]
 print(mean(k))
 
 z := (@x in k,#y in j) that p(x) & m(y) | m(x) 

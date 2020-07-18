@@ -51,14 +51,18 @@ def isKeyword(str):
     return False
 
 def createKeyword(buff):
-    pass
+    if buff == "true":
+        return Token("BOOL",True)
+    elif buff == "false":
+        return Token("BOOL",False)
+    else:
+        return Token(token_name[buff],buff)
 
 def parseIdentifier(str,i,l):
     buff = "" + str[i]
     i += 1
     while i < l:
         c = str[i]
-        print(c)
         if isIdentifier(c) or isNumber(c):
             buff += c
             i += 1
@@ -66,9 +70,9 @@ def parseIdentifier(str,i,l):
             i -= 1
             break
         if isKeyword(buff):
+            i -= 1
             return (createKeyword(buff),i)
     return (Token("IDEN",buff),i)
-
 
 ops = [
         "+","-","/","*","(",")","^","=","|","&","~","@",
@@ -108,10 +112,11 @@ token_name = {
     "]":"RSQB",
     "{":"LCURL",
     "}":"RCURL",
+    ":=":"VAR"
 }
 
 def isNext(ch,str,i):
-    if isinstance(ch,function):
+    if callable(ch):
         return ch(str[i+1])
     if str[i+1] == ch:
         return True
@@ -150,7 +155,10 @@ def tokenize(str):
             elif c == "~" and isNext("=",str,i):
                 joinNext(c,str,i,tokens)
                 i += 1
-            elif c == "-" and isNext("=",str,i):
+            elif c == "-" and isNext(">",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
+            elif c == ":" and isNext("=",str,i):
                 joinNext(c,str,i,tokens)
                 i += 1
             else:
@@ -221,6 +229,13 @@ def parse(tokens):
         if isinstance(out,dict):
             exps.append(out)
     return exps
+
+def verify(op,lhs,rhs):
+    if op.type == "VAR" or op.type == "ASSGN":
+        if not(lhs["type"] == "Atom"):
+            print("Expected Identifier")
+            sys.exit(1)
+        
 
 def exp(min,tokens):
     lhs = term(tokens)
@@ -313,33 +328,75 @@ def coerse(op,*params):
 def astToExp(ast):
     pass
 
-def eval(ast):
+class Env(dict):
+    def __init__(self , params = () , args = () , outer = None):
+        self.update(zip(params,args))
+        self.outer = outer
+    
+    def find(self,var):
+        if var in self:
+            return self;
+        elif self.outer != None:
+            return self.outer.find(var)
+        return None
+    
+    def updateVar(self,var,value):
+        if var in self:
+            self[var] = value
+            return value
+        elif self.outer != None:
+            return self.outer.updateVar(var,value)
+        else:
+            print("Error: Cannot update non-existant variable -->",var)
+            sys.exit(1)
+
+
+def std_env():
+    env = Env()
+    env.update(vars(math))
+    env.update({
+        "print":print,
+        "abs":abs
+    })
+
+def eval(ast,env=std_env(("archan_1","jagrat","boy"),(True,True,True))):
     if isinstance(ast,list):
         outcome = []
         for exp in ast:
             outcome.append(eval(exp))
         return outcome
     elif isinstance(ast,dict):
-        if ast["reduced"]:
-            return ast
+        # if ast["reduced"]:
+        #     return ast
         if ast["type"] == "Binary":
-            ast["left"] = eval(ast["left"])
-            ast["right"] = eval(ast["right"])
-            ast["reduced"] = True
-            return opmap[ast["op"]](ast["left"],ast["right"])
+            if ast["op"] == "VAR":
+                name = ast["left"]["value"]
+                val = eval(ast["right"])
+                env.update({name:val})
+                return val
+            if ast["op"] == "ASGN":
+                name = ast["left"]["value"]
+                val = eval(ast["right"])
+                return env.updateVar(name,val)
+            else:
+                ast["left"] = eval(ast["left"])
+                ast["right"] = eval(ast["right"])
+                # ast["reduced"] = True
+                return opmap[ast["op"]](ast["left"],ast["right"])
         elif ast["type"] == "Unary":
             ast["right"] = eval(ast["right"])
-            ast["reduced"] = True
+            # ast["reduced"] = True
             return opmap[ast["op"]](ast["right"])
+        elif ast["type"] == "Atom":
+            return env.find(ast["value"])
     else:
         return ast
 
-
-tokens = tokenize("archan_1 + 5 & jagrat -> boy")
+tokens = tokenize("archan_1 + 5 & jagrat -> boy & ~true")
 pprint(tokens,indent=4)
 ast = parse(tokens)
 pprint(ast,indent=4)
-
+# print(eval(ast))
 
 # tokens = tokenize("(T | F) & ~F & 10 > 5 & (~F == T)")
 # pprint(tokens,indent=4)

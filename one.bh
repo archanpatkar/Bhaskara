@@ -1,0 +1,6 @@
+z := if(true & false) {
+    x := 5
+    x
+} else (y := 10)
+
+z

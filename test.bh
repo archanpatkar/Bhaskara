@@ -10,17 +10,31 @@ def f2(y) {
 }
 print(f2(10))
 
+f3 := def(x) { x^2 }
+f4 := dyn() {  }
+
+
 k := [10,20,30,40]
 j := [1,2,3]
 print(mean(k))
 
 z := (@x in k,#y in j) holds p(x) & m(y) | m(x) 
 
-x := (#f) in k holds m(f)
+(T | F) & ~F & 10 > 5 & (~F == T)
+archan_1 + 5 & jagrat -> boy & ~true
+
+x := (#f) in k holds m(f) do {
+
+}
 
 def f3(x) = {
-    match x
-    case 10 then x 
-    case 0 then (x+3)*3
-    default x+2 
+    y := 2
+    match x {
+        | 10 => match y {
+                | 0 => x
+                | _ => x*2
+            } 
+        | 0 => (x+3)*3
+        | _ => x+2 
+    }
 }

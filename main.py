@@ -541,5 +541,4 @@ if __name__ == "__main__":
         print(run(code))
         # interpreter.execute(code)
     else:
-        pass
-        # repl()
+        repl()

@@ -1,1 +1,1 @@
-### भास्कर - A Math and Logic DSL
+### भास्कर - A Functional Program Language

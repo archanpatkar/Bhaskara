@@ -2,6 +2,7 @@ import math
 from os import sys
 from pprint import pprint
 from collections import namedtuple
+from panim import *
 
 # भास्कर - A Math and Logic DSL
 # Parser and Evaluator based on Precedence Climbing LR(1) Algorithm
@@ -126,10 +127,11 @@ token_name = {
 }
 
 def isNext(ch,str,i):
-    if callable(ch):
-        return ch(str[i+1])
-    if str[i+1] == ch:
-        return True
+    if len(str) > i+1:
+        if callable(ch):
+            return ch(str[i+1])
+        if str[i+1] == ch:
+            return True
     return False
     
 def joinNext(ch,str,i,tokens):
@@ -194,15 +196,24 @@ def BinOp(op,left,right):
 def UnOp(op,value):
     return { "type":"Unary", "op":op, "right":value, "reduced":False }
 
+def Block(exps):
+    return { "type":"Block", "exp":[] }
+
+def CondOp(cond,b1,b2):
+    return { "type":"Cond", "cond": cond, "b1":b1, "b2":b2 }
+
 def Atom(value):
     return { "type":"Atom", "value":value }
 
 binaryops = [
                 "ADD","SUBS","DIV","MUL","EXP","OR","AND",
-                "LT","GT","EQ","IMP","NOTEQ","LTEQ","GTEQ"
+                "LT","GT","EQ","IMP","NOTEQ","LTEQ","GTEQ",
+                "VAR","ASGN"
             ]
 unaryops = ["SUBS","ADD","NOT"]
 opconfig = {
+    "VAR":(0,0),
+    "ASGN":(0,0),
     "OR":(1,1),
     "AND":(2,1),
     "IMP":(2,1),
@@ -271,6 +282,8 @@ def term(tokens):
     if current.type == 'LPAREN':
         getNext(tokens)
         out = exp(0,tokens)
+        print(out)
+        print(peekNext(tokens))
         if getNext(tokens).type != "RPAREN":
             print("Unmatched paren '('")
             sys.exit(1)
@@ -282,6 +295,28 @@ def term(tokens):
             return UnOp(ch,exp(opconfig[current.type][0],tokens))
         else:
             return UnOp(current.type,exp(opconfig[current.type][0],tokens))
+    elif current.type == "IF":
+        getNext(tokens)
+        cond = exp(0,tokens)
+        if getNext(tokens).type != "THEN":
+            print("Expected 'then'")
+            sys.exit(1)
+        b1 = exp(0,tokens)
+        if getNext(tokens).type != "ELSE":
+            print("Expected 'else'")
+            sys.exit(1)
+        b2 = exp(0,tokens)
+        return CondOp(cond,b1,b2)
+    elif current.type == "LCURL":
+        getNext(tokens)
+        block = []
+        current = peekNext(tokens)
+        while current.type != "RCURL":
+            block.append(exp(0,tokens))
+            current = peekNext(tokens)
+        
+    elif current.type == "LSQB":
+        pass
     elif current.type == "NUM":
         getNext(tokens)
         return current.val
@@ -352,7 +387,7 @@ class Env(dict):
     
     def find(self,var):
         if var in self:
-            return self;
+            return self[var];
         elif self.outer != None:
             return self.outer.find(var)
         return None
@@ -365,18 +400,19 @@ class Env(dict):
             return self.outer.updateVar(var,value)
         else:
             print("Error: Cannot update non-existant variable -->",var)
-            sys.exit(1)
+            # sys.exit(1)
 
 def std_env():
     env = Env()
-    env.update(vars(math))
+    # env.update(vars(math))
     env.update({
-        "print":print,
-        "abs":abs,
-        "archan_1":True,
-        "jagrat":True,
-        "boy":True
+        # "print":print,
+        # "abs":abs,
+        # "archan_1":True,
+        # "jagrat":True,
+        # "boy":True
     })
+    return env
 
 ROOT = std_env()
 
@@ -408,17 +444,67 @@ def eval(ast,env=ROOT):
             ast["right"] = eval(ast["right"])
             # ast["reduced"] = True
             return opmap[ast["op"]](ast["right"])
+        elif ast["type"] == "Cond":
+            ast["cond"] = eval(ast["cond"])
+            if ast["cond"]:
+                return eval(ast["b1"])
+            else:
+                return eval(ast["b2"])
         elif ast["type"] == "Atom":
             return env.find(ast["value"])
     else:
         return ast
 
-tokens = tokenize("archan_1 + 5 & jagrat -> boy & ~true")
-pprint(tokens,indent=4)
-ast = parse(tokens)
-pprint(ast,indent=4)
-# print(eval(ast))
+def run(str):
+    tokens = tokenize(str)
+    # pprint(tokens,indent=4)
+    ast = parse(tokens)
+    # pprint(ast,indent=4)
+    return eval(ast)
 
+def test(str):
+    tokens = tokenize(str)
+    pprint(tokens,indent=4)
+    ast = parse(tokens)
+    pprint(ast,indent=4)
+    pprint(eval(ast),indent=4)
+
+test("if true & (x := 5) then x + 10 else x")
+
+def repl():
+    # foreground(RED) 
+    foreground(GREEN) 
+    print(bold("Bhaskara 0.0.1"))
+    print("Type 'help' for more information") 
+    foreground(WHITE)
+    read = input(">>> ") 
+    while read != "q" and read != "quit" and read != "exit" and read != "bye": 
+        if(read == "help"):
+            pass
+            # print("tape - Print the Tape")
+            # print("curpos - Current Position of Tape Head")
+            # print("reset - Resets the Tape and the Tape Head")
+            # print(" * - where * is valid in brainfuck")
+        else:
+            print(run(read)[-1])
+        read = input(">>> ") 
+    print("") 
+    # foreground(WHITE) 
+    # background(BLACK) 
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        code = open(sys.argv[1],"r").read()
+        print(code)
+        # interpreter.execute(code)
+    else:
+        pass
+        # repl()
+
+# print(run("(x := true)"))
+# print(ROOT)
+# print(run("x"))
+# tokens = tokenize("archan_1 + 5 & jagrat -> boy & ~true")
 # tokens = tokenize("(T | F) & ~F & 10 > 5 & (~F == T)")
 # pprint(tokens,indent=4)
 # ast = parse(tokens)

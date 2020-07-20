@@ -146,7 +146,13 @@ def tokenize(str):
     buff = ""
     while i < l:
         c = str[i]
-        if isNumber(c):
+        if c == "/" and isNext("/",str,i):
+            i += 2
+            c = str[i]
+            while c != "\n" and i < l:
+                i += 1
+                c = str[i]
+        elif isNumber(c):
             num,i = parseNum(str,i,l)
             tokens.append(num)
         elif isBool(c) and not(isNext(isIdentifier,str,i)) and not(isNext(isNumber,str,i)):
@@ -173,12 +179,6 @@ def tokenize(str):
             elif c == ":" and isNext("=",str,i):
                 joinNext(c,str,i,tokens)
                 i += 1
-            elif c == "/" and isNext("/",str,i):
-                i += 2
-                c = str[i]
-                while not(isWhite(c)) and i < l:
-                    i += 1
-                    c = str[i]
             else:
                 tokens.append(Token(token_name[c],c))
         elif isIdentifier(c):
@@ -207,6 +207,10 @@ def Func(name,params,body):
 
 def Atom(value):
     return { "type":"Atom", "value":value }
+
+def Apply(iden,actual):
+    return { "type":"Apply", "iden":iden, "actual":actual }
+
 
 binaryops = [
                 "ADD","SUBS","DIV","MUL","EXP","OR","AND",
@@ -291,13 +295,16 @@ def expect(ttype,tokens):
 
 def term(tokens):
     current = peekNext(tokens)
+    print("*********************************************")
+    pprint(current,indent=4)
+    pprint(tokens,indent=4)
     if current == None:
         return
     elif current.type == 'LPAREN':
         getNext(tokens)
         out = exp(0,tokens)
-        print(out)
-        print(peekNext(tokens))
+        # print(out)
+        # print(peekNext(tokens))
         if getNext(tokens).type != "RPAREN":
             print("Unmatched paren '('")
             sys.exit(1)
@@ -332,18 +339,29 @@ def term(tokens):
             name = getNext(tokens).val
         if getNext(tokens).type != "LPAREN":
             pass
+        print(name)
         current = getNext(tokens)
-        while current.type != "RPAREN":
-            if current.type != "IDEN":
-                pass
-            params.append(getNext(tokens).val)
-            current = getNext(tokens)
+        while current != None and current.type != "RPAREN":
+            if current.type == "IDEN":
+                params.append(current.val)
+                current = getNext(tokens)
+            elif current.type == "SEP":
+                current = getNext(tokens)
+                continue
+            else:
+                print("Expected Identifiers")
+                sys.exit(0)
+                # break
+        print(params)
         body = None
-        if peekNext(tokens).type == "ASGN" or peekNext(tokens).type == "LCURL":
-            getNext(tokens)
+        n = peekNext(tokens)
+        if n.type == "ASGN" or n.type == "LCURL":
+            if n.type == "ASGN":
+                getNext(tokens)
             body = exp(0,tokens)
         else:
             pass
+        print(body)
         return Func(name,params,body)
     elif current.type == "LCURL":
         getNext(tokens)
@@ -353,7 +371,7 @@ def term(tokens):
             block.append(exp(0,tokens))
             current = peekNext(tokens)
         getNext(tokens)
-        print(block)
+        # print(block)
         return Block(block)
     elif current.type == "LSQB":
         pass
@@ -364,11 +382,32 @@ def term(tokens):
         getNext(tokens)
         return current.val
     elif current.type == "IDEN":
-        return Atom(getNext(tokens).val)
+        i = Atom(getNext(tokens).val)
+        if peekNext(tokens).type == "LPAREN":
+            print("----Here----")
+            print(tokens)
+            getNext(tokens)
+            params = []
+            n = peekNext(tokens)
+            print(n)
+            while n.type != "RPAREN":
+                if n.type == "SEP":
+                    print("passing by")
+                    getNext(tokens)
+                    n = peekNext(tokens)
+                    continue
+                e = exp(0,tokens)
+                if e != None:
+                    params.append(e)
+                n = peekNext(tokens)
+                print(n)
+            getNext(tokens)
+            return Apply(i,params)
+        return i
     elif current.type == "LINEEND":
         getNext(tokens)
     else:
-        print(tokens)
+        # print(tokens)
         print("Unexpected Error")
         sys.exit(1)
 
@@ -443,6 +482,25 @@ class Env(dict):
             print("Error: Cannot update non-existant variable -->",var)
             # sys.exit(1)
 
+class BFunction(dict):
+    def __init__(self, params, body, env):
+        self.lexical_scope = env
+        self.param_name = params
+        self.body = body    
+
+    def execute(self,actual):
+        frame = Env()
+        less = False
+        for var in range(len(self.param_name)):
+            if var >= len(actual):
+                less = True
+                frame.update({self.param_name[var]:None})
+            else:
+                frame.update({self.param_name[var]:actual[var]})
+        if less:
+            print("Warning: fewer parameters passed")
+        
+
 def std_env():
     env = Env()
     # env.update(vars(math))
@@ -506,19 +564,39 @@ def test(str):
     pprint(tokens,indent=4)
     ast = parse(tokens)
     pprint(ast,indent=4)
-    pprint(eval(ast),indent=4)
+    # pprint(eval(ast),indent=4)
 
-test("if true & (x := 5) then x + 10 else x")
-print(eval(parse(tokenize(
+test(
 """
 z := if(true & false) {
     x := 5
     x
 } else (y := 10)
 
+def f1(x) = x^3
+
+def f2(x,y) {
+    x + y
+}
+
+f1(10)
+
+f2(1,f1(2))
 z
 """
-))))
+)
+
+# test("if true & (x := 5) then x + 10 else x")
+# print(eval(parse(tokenize(
+# """
+# z := if(true & false) {
+#     x := 5
+#     x
+# } else (y := 10)
+
+# z
+# """
+# ))))
 
 def repl():
     foreground(GREEN) 
@@ -537,8 +615,9 @@ def repl():
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         code = open(sys.argv[1],"r").read()
-        print(code)
+        # print(code)
         print(run(code))
         # interpreter.execute(code)
     else:
-        repl()
+        pass
+        # repl()

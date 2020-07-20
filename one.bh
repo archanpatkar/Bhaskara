@@ -3,4 +3,14 @@ z := if(true & false) {
     x
 } else (y := 10)
 
-z
+def f1(x) = x^3
+
+def f2(x,y) {
+    x + y
+}
+
+f1(10)
+
+out := f2(1,f1(2))
+
+print(out)

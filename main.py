@@ -84,6 +84,23 @@ def parseIdentifier(str,i,l):
             return (createKeyword(buff),i)
     return (Token("IDEN",buff),i)
 
+def parseString(str,i,l):
+    buff = ""
+    i += 1
+    c = ""
+    while i < l:
+        c = str[i]
+        if c != '"':
+            buff += c
+            print(c)
+            i += 1
+        else:
+            break
+    if c != '"':
+        print('Unmatched string `"`')
+        sys.exit(0)
+    return (Token("STR",buff),i)
+
 ops = [
         "+","-","/","*","(",")","^","=","|","&","~","@",
         "#","==",">","<",">=","<=","~=","[","]","{","}",
@@ -146,12 +163,18 @@ def tokenize(str):
     buff = ""
     while i < l:
         c = str[i]
+        # print(c)
+        # print(tokens)
         if c == "/" and isNext("/",str,i):
             i += 2
             c = str[i]
             while c != "\n" and i < l:
                 i += 1
                 c = str[i]
+        elif c == '"':
+            t,i = parseString(str,i,l)
+            # print(t)
+            tokens.append(t)
         elif isNumber(c):
             num,i = parseNum(str,i,l)
             tokens.append(num)
@@ -295,9 +318,9 @@ def expect(ttype,tokens):
 
 def term(tokens):
     current = peekNext(tokens)
-    print("*********************************************")
-    pprint(current,indent=4)
-    pprint(tokens,indent=4)
+    # print("*********************************************")
+    # pprint(current,indent=4)
+    # pprint(tokens,indent=4)
     if current == None:
         return
     elif current.type == 'LPAREN':
@@ -339,7 +362,7 @@ def term(tokens):
             name = getNext(tokens).val
         if getNext(tokens).type != "LPAREN":
             pass
-        print(name)
+        # print(name)
         current = getNext(tokens)
         while current != None and current.type != "RPAREN":
             if current.type == "IDEN":
@@ -352,7 +375,7 @@ def term(tokens):
                 print("Expected Identifiers")
                 sys.exit(0)
                 # break
-        print(params)
+        # print(params)
         body = None
         n = peekNext(tokens)
         if n.type == "ASGN" or n.type == "LCURL":
@@ -361,7 +384,7 @@ def term(tokens):
             body = exp(0,tokens)
         else:
             pass
-        print(body)
+        # print(body)
         return Func(name,params,body)
     elif current.type == "LCURL":
         getNext(tokens)
@@ -381,18 +404,21 @@ def term(tokens):
     elif current.type == "BOOL":
         getNext(tokens)
         return current.val
+    elif current.type == "STR":
+        print(getNext(tokens))
+        return current.val
     elif current.type == "IDEN":
         i = Atom(getNext(tokens).val)
         if peekNext(tokens).type == "LPAREN":
-            print("----Here----")
-            print(tokens)
+            # print("----Here----")
+            # print(tokens)
             getNext(tokens)
             params = []
             n = peekNext(tokens)
-            print(n)
+            # print(n)
             while n.type != "RPAREN":
                 if n.type == "SEP":
-                    print("passing by")
+                    # print("passing by")
                     getNext(tokens)
                     n = peekNext(tokens)
                     continue
@@ -400,7 +426,7 @@ def term(tokens):
                 if e != None:
                     params.append(e)
                 n = peekNext(tokens)
-                print(n)
+                # print(n)
             getNext(tokens)
             return Apply(i,params)
         return i
@@ -488,24 +514,30 @@ class BFunction(dict):
         self.param_name = params
         self.body = body    
 
-    def execute(self,actual):
-        frame = Env()
+    def __call__(self,*actual):
+        # print("Actual params")
+        # print(actual)
+        frame = Env(outer=self.lexical_scope)
         less = False
         for var in range(len(self.param_name)):
-            if var >= len(actual):
-                less = True
-                frame.update({self.param_name[var]:None})
-            else:
-                frame.update({self.param_name[var]:actual[var]})
+            # if var > len(actual):
+            #     less = True
+            #     frame.update({self.param_name[var]:None})
+            # else:
+            frame.update({self.param_name[var]:actual[var]})
         if less:
             print("Warning: fewer parameters passed")
-        
+        # print(self.body)
+        # print("*--------Function Frame--------*")
+        # print(frame)
+        # print()
+        return eval(self.body,frame)
 
 def std_env():
     env = Env()
     # env.update(vars(math))
     env.update({
-        # "print":print,
+        "print":print
         # "abs":abs
     })
     return env
@@ -513,43 +545,65 @@ def std_env():
 ROOT = std_env()
 
 def eval(ast,env=ROOT):
+    # print("-----------------Eval-----------------")
+    # pprint(ast,indent=4)
     if isinstance(ast,list):
         outcome = []
         for exp in ast:
-            outcome.append(eval(exp))
+            outcome.append(eval(exp,env))
         return outcome
     elif isinstance(ast,dict):
         if ast["type"] == "Block":
             outcome = []
             for exp in ast["exp"]:
-                temp = eval(exp)
+                temp = eval(exp,env)
                 if temp != None:
                     outcome.append(temp)
             return outcome[-1]
-        if ast["type"] == "Binary":
+        elif ast["type"] == "Func":
+            f = BFunction(ast["params"],ast["body"],env)
+            env.update({ast["name"]:f})
+            return f
+        elif ast["type"] == "Apply":
+            func = eval(ast["iden"],env)
+            if not callable(func):
+                print("Function required")
+                sys.exit(0)
+            params = [eval(e,env) for e in ast["actual"] if e != None]
+            # print(params)
+            # print("lalalal")
+            # print(ast["iden"])
+            r = func(*params)
+            # print(r)
+            return r
+        elif ast["type"] == "Binary":
             if ast["op"] == "VAR":
                 name = ast["left"]["value"]
-                val = eval(ast["right"])
+                val = eval(ast["right"],env)
                 env.update({name:val})
                 return val
             if ast["op"] == "ASGN":
                 name = ast["left"]["value"]
-                val = eval(ast["right"])
+                val = eval(ast["right"],env)
                 return env.updateVar(name,val)
             else:
-                ast["left"] = eval(ast["left"])
-                ast["right"] = eval(ast["right"])
-                return opmap[ast["op"]](ast["left"],ast["right"])
+                # print(ast)
+                # ast["left"] = eval(ast["left"],env)
+                # ast["right"] = eval(ast["right"],env)
+                # print(ast["left"])
+                # print(ast["right"])
+                return opmap[ast["op"]](eval(ast["left"],env),eval(ast["right"],env))
         elif ast["type"] == "Unary":
-            ast["right"] = eval(ast["right"])
-            return opmap[ast["op"]](ast["right"])
+            # ast["right"] = eval(ast["right"],env)
+            return opmap[ast["op"]](eval(ast["right"],env))
         elif ast["type"] == "Cond":
-            ast["cond"] = eval(ast["cond"])
-            if ast["cond"]:
-                return eval(ast["b1"])
+            # ast["cond"] = 
+            if eval(ast["cond"],env):
+                return eval(ast["b1"],env)
             elif ast["b2"] != None:
-                return eval(ast["b2"])
+                return eval(ast["b2"],env)
         elif ast["type"] == "Atom":
+            # print(ast["value"])
             return env.find(ast["value"])
     else:
         return ast
@@ -566,25 +620,28 @@ def test(str):
     pprint(ast,indent=4)
     # pprint(eval(ast),indent=4)
 
-test(
-"""
-z := if(true & false) {
-    x := 5
-    x
-} else (y := 10)
+# test(
+# """
+# z := if(true & false) {
+#     x := 5
+#     x
+# } else (y := 10)
 
-def f1(x) = x^3
+# def f1(x) = x*3
 
-def f2(x,y) {
-    x + y
-}
+# def f2(x,y) {
+#     x + y
+# }
 
-f1(10)
+# f1(10)
 
-f2(1,f1(2))
-z
-"""
-)
+# f2(1,f1(2))
+
+# print(10)
+
+# z
+# """
+# )
 
 # test("if true & (x := 5) then x + 10 else x")
 # print(eval(parse(tokenize(
@@ -598,6 +655,9 @@ z
 # """
 # ))))
 
+test('x := "one"')
+
+
 def repl():
     foreground(GREEN) 
     print(bold("Bhaskara 0.0.1"))
@@ -607,6 +667,9 @@ def repl():
     while read != "q" and read != "quit" and read != "exit" and read != "bye": 
         if(read == "help"):
             pass
+        if(read == "clear"):
+            clrscr()
+            gotoxy(0,0)
         else:
             print(run(read)[-1])
         read = input(">>> ") 
@@ -616,8 +679,8 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         code = open(sys.argv[1],"r").read()
         # print(code)
-        print(run(code))
+        run(code)
         # interpreter.execute(code)
     else:
-        pass
-        # repl()
+        # pass
+        repl()

@@ -9,8 +9,14 @@ def f2(x,y) {
     x + y
 }
 
-f1(10)
+print(f1(10))
 
 out := f2(1,f1(2))
 
 print(out)
+
+def fac(n) = if n == 0 then 1 else n * fac(n-1)
+
+print(fac(3))
+y = "hello world!"
+print(y)

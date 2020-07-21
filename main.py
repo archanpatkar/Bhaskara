@@ -92,7 +92,7 @@ def parseString(str,i,l):
         c = str[i]
         if c != '"':
             buff += c
-            print(c)
+            # print(c)
             i += 1
         else:
             break
@@ -104,9 +104,9 @@ def parseString(str,i,l):
 ops = [
         "+","-","/","*","(",")","^","=","|","&","~","@",
         "#","==",">","<",">=","<=","~=","[","]","{","}",
-        ",","->","%","!",":"
+        ",","->","%","!",":","$"
     ]
-keywords = ["true","false","niether","both","if","then","else","def"]
+keywords = ["true","false","neither","both","if","then","else","def"]
 token_name = {
     "+":"ADD",
     "-":"SUBS",
@@ -140,7 +140,9 @@ token_name = {
     "{":"LCURL",
     "}":"RCURL",
     ":=":"VAR",
-    "//":"COMM"
+    "//":"COMM",
+    "|>":"LPIPE",
+    "<|":"RPIPE"
 }
 
 def isNext(ch,str,i):
@@ -202,6 +204,12 @@ def tokenize(str):
             elif c == ":" and isNext("=",str,i):
                 joinNext(c,str,i,tokens)
                 i += 1
+            elif c == "|" and isNext(">",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
+            elif c == "<" and isNext("|",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
             else:
                 tokens.append(Token(token_name[c],c))
         elif isIdentifier(c):
@@ -238,12 +246,14 @@ def Apply(iden,actual):
 binaryops = [
                 "ADD","SUBS","DIV","MUL","EXP","OR","AND",
                 "LT","GT","EQ","IMP","NOTEQ","LTEQ","GTEQ",
-                "VAR","ASGN"
+                "VAR","ASGN","LPIPE","RPIPE"
             ]
 unaryops = ["SUBS","ADD","NOT"]
 opconfig = {
     "VAR":(0,0),
     "ASGN":(0,0),
+    "LPIPE":(0,1),
+    "RPIPE":(0,0),
     "OR":(1,1),
     "AND":(2,1),
     "IMP":(2,1),
@@ -378,6 +388,9 @@ def term(tokens):
         # print(params)
         body = None
         n = peekNext(tokens)
+        while n.val == "\n":
+            n = getNext(tokens)
+            n = peekNext(tokens)
         if n.type == "ASGN" or n.type == "LCURL":
             if n.type == "ASGN":
                 getNext(tokens)
@@ -405,7 +418,7 @@ def term(tokens):
         getNext(tokens)
         return current.val
     elif current.type == "STR":
-        print(getNext(tokens))
+        getNext(tokens)
         return current.val
     elif current.type == "IDEN":
         i = Atom(getNext(tokens).val)
@@ -431,7 +444,7 @@ def term(tokens):
             return Apply(i,params)
         return i
     elif current.type == "LINEEND":
-        getNext(tokens)
+        return getNext(tokens).val
     else:
         # print(tokens)
         print("Unexpected Error")
@@ -455,7 +468,9 @@ opmap = {
     "LTEQ":lambda x,y: x <= y,
     "NOTEQ": lambda x,y: x != y,
     "IMP": lambda x,y: not(x) or y,
-    "EXP": math.pow
+    "EXP": math.pow,
+    "LPIPE": lambda x,y: y(x),
+    "RPIPE": lambda x,y: x(y)
 }
 
 bool_ops = ["NOT","AND","OR",""]
@@ -557,8 +572,9 @@ def eval(ast,env=ROOT):
             outcome = []
             for exp in ast["exp"]:
                 temp = eval(exp,env)
-                if temp != None:
+                if temp != '\n':
                     outcome.append(temp)
+            print(outcome)
             return outcome[-1]
         elif ast["type"] == "Func":
             f = BFunction(ast["params"],ast["body"],env)
@@ -569,7 +585,7 @@ def eval(ast,env=ROOT):
             if not callable(func):
                 print("Function required")
                 sys.exit(0)
-            params = [eval(e,env) for e in ast["actual"] if e != None]
+            params = [eval(e,env) for e in ast["actual"] if e != '\n']
             # print(params)
             # print("lalalal")
             # print(ast["iden"])
@@ -615,10 +631,21 @@ def run(str):
 
 def test(str):
     tokens = tokenize(str)
+    print("printing")
     pprint(tokens,indent=4)
     ast = parse(tokens)
     pprint(ast,indent=4)
-    # pprint(eval(ast),indent=4)
+    pprint(eval(ast),indent=4)
+
+# test("""
+# def test2(a,b,c,d)
+# {
+#     print <| "Welcome to test2!!!" 
+#     a + b + c + d
+# }
+
+# test2(10,2000,400,-555) |> print
+# """)
 
 # test(
 # """
@@ -655,7 +682,7 @@ def test(str):
 # """
 # ))))
 
-test('x := "one"')
+# test('x := "one"')
 
 
 def repl():
@@ -682,5 +709,5 @@ if __name__ == "__main__":
         run(code)
         # interpreter.execute(code)
     else:
-        # pass
-        repl()
+        pass
+        # repl()

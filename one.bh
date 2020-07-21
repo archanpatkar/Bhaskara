@@ -17,6 +17,18 @@ print(out)
 
 def fac(n) = if n == 0 then 1 else n * fac(n-1)
 
-print(fac(3))
+print(fac <| 3)
+
+def test2(a,b,c,d) 
+{
+    print <| "Welcome to test2!!!" 
+    a + b + c + d
+}
+4 |> fac |> print
+
+print <| fac <| 5
+
 y = "hello world!"
 print(y)
+
+test2(10,2000,400,-555) |> print

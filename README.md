@@ -1,1 +1,1 @@
-### भास्कर - A Functional Program Language
+### भास्कर - A Functional Programming Language

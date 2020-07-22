@@ -7,6 +7,7 @@ from src.tokens import *
 from src.ast import *
 from src.parser import *
 from src.interpreter import *
+import json
 
 # भास्कर - A Math and Logic DSL
 # Parser and Evaluator uses Precedence Climbing LR(1) Algorithm
@@ -476,8 +477,13 @@ def repl():
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         code = open(sys.argv[1],"r").read()
-        # print(code)
-        run(code)
+        if len(sys.argv) > 2:
+            if sys.argv[2] == "--compile":
+                jast = json.dumps(parse(tokenize(code)))
+                open(sys.argv[1].split(".")[0]+".json","w").write(jast)
+        else:
+            # print(code)
+            run(code)
         # interpreter.execute(code)
     else:
         # pass

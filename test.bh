@@ -1,7 +1,10 @@
 x := !(T | F) & ~F & 5 > 5
 x = (-500) * 500 + 6
 
-// type Color = Red | Blue | Green
+// Disjoint Sum types or Enums 
+type Color = Purple | Blue | RGB(r,g,b)
+
+type Maybe = Nothing | Just(x)
 
 def f1(x) = x^10
 def f2(y) {
@@ -18,6 +21,9 @@ k := [10,20,30,40]
 j := [1,2,3]
 print(mean(k))
 
+// Constant
+x <- 10
+
 z := (@x in k,#y in j) holds p(x) & m(y) | m(x) 
 
 (T | F) & ~F & 10 > 5 & (~F == T)
@@ -26,6 +32,11 @@ archan_1 + 5 & jagrat -> boy & ~true
 x := (#f) in k holds m(f) do {
 
 }
+
+// can introduce code quotations
+<@ 
+f4(10,x + y)
+@>
 
 def f3(x) = {
     y := 2

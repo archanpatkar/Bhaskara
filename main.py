@@ -3,17 +3,19 @@ from os import sys
 from pprint import pprint
 from collections import namedtuple
 from panim import *
+from src.tokens import *
+from src.ast import *
+from src.parser import *
+from src.interpreter import *
 
 # भास्कर - A Math and Logic DSL
 # Parser and Evaluator uses Precedence Climbing LR(1) Algorithm
 # Based on: http://www.engr.mun.ca/~theo/Misc/exp_parsing.htm
-empty = [" ","\r","\t"]
 def isWhite(str):
-    if str in empty:
+    if str in white:
         return True
     return False
 
-digits = ["0","1","2","3","4","5","6","7","8","9"]
 def isNumber(str):
     if str in digits:
         return True
@@ -41,9 +43,6 @@ def parseNum(str,i,l):
         buff = int(buff)
     return (Token("NUM",buff),i)
 
-bools = ["T","F","N","B"]
-N = None
-B = (True,False)
 def isBool(str):
     if str in bools:
         return True
@@ -101,49 +100,6 @@ def parseString(str,i,l):
         sys.exit(0)
     return (Token("STR",buff),i)
 
-ops = [
-        "+","-","/","*","(",")","^","=","|","&","~","@",
-        "#","==",">","<",">=","<=","~=","[","]","{","}",
-        ",","->","%","!",":","$"
-    ]
-keywords = ["true","false","neither","both","if","then","else","def"]
-token_name = {
-    "+":"ADD",
-    "-":"SUBS",
-    "/":"DIV",
-    "*":"MUL",
-    "%":"MOD",
-    "(":"LPAREN",
-    ")":"RPAREN",
-    "^":"EXP",
-    "|":"OR",
-    "&":"AND",
-    "~":"NOT",
-    "->":"IMP",
-    "=":"ASGN",
-    ">":"GT",
-    "<":"LT",
-    "==":"EQ",
-    ">=":"GTEQ",
-    "<=":"LTEQ",
-    "~=":"NOTEQ",
-    "if":"IF",
-    "then":"THEN",
-    "else":"ELSE",
-    "def":"DEF",
-    ",":"SEP",
-    ";":"SEMI",
-    "@":"FORALL",
-    "#":"EXISTS",
-    "[":"LSQB",
-    "]":"RSQB",
-    "{":"LCURL",
-    "}":"RCURL",
-    ":=":"VAR",
-    "//":"COMM",
-    "|>":"LPIPE",
-    "<|":"RPIPE"
-}
 
 def isNext(ch,str,i):
     if len(str) > i+1:
@@ -157,7 +113,6 @@ def joinNext(ch,str,i,tokens):
     j = ch+str[i+1]
     tokens.append(Token(token_name[j],j))
 
-Token = namedtuple("Token",["type","val"])
 def tokenize(str):
     tokens = []
     i = 0
@@ -218,66 +173,8 @@ def tokenize(str):
         elif c == "\n" or c == ";":
             tokens.append(Token("LINEEND",c))            
         i+=1
-    # tokens.append(Token("EOF",""))
+    tokens.append(Token("EOF",""))
     return tokens
-
-def BinOp(op,left,right):
-    return { "type":"Binary", "left":left, "op":op, "right":right }
-
-def UnOp(op,value):
-    return { "type":"Unary", "op":op, "right":value }
-
-def Block(exps):
-    return { "type":"Block", "exp":exps }
-
-def CondOp(cond,b1,b2):
-    return { "type":"Cond", "cond": cond, "b1":b1, "b2":b2 }
-
-def Func(name,params,body):
-    return { "type":"Func", "name":name, "params":params, "body":body }
-
-def Atom(value):
-    return { "type":"Atom", "value":value }
-
-def Apply(iden,actual):
-    return { "type":"Apply", "iden":iden, "actual":actual }
-
-
-binaryops = [
-                "ADD","SUBS","DIV","MUL","EXP","OR","AND",
-                "LT","GT","EQ","IMP","NOTEQ","LTEQ","GTEQ",
-                "VAR","ASGN","LPIPE","RPIPE"
-            ]
-unaryops = ["SUBS","ADD","NOT"]
-opconfig = {
-    "VAR":(0,0),
-    "ASGN":(0,0),
-    "LPIPE":(0,1),
-    "RPIPE":(0,0),
-    "OR":(1,1),
-    "AND":(2,1),
-    "IMP":(2,1),
-    "EQ":(3,1),
-    "NOTEQ":(3,1),
-    "LT":(4,1),
-    "LTEQ":(4,1),
-    "GTEQ":(4,1),
-    "GT":(4,1),
-    "ADD":(5,1),
-    "SUBS":(5,1),
-    "MUL":(6,1),
-    "MOD":(6,1),
-    "DIV":(6,1),
-    "EXP":(7,0),
-    "NEG":(8,0),
-    "POS":(8,0),
-    "NOT":(8,0)
-}
-
-swap = {
-    "SUBS":"NEG",
-    "ADD":"POS"
-}
 
 def getNext(tokens):
     if len(tokens) > 0:
@@ -295,6 +192,8 @@ def parse(tokens):
         out = exp(0,tokens)
         if isinstance(out,dict):
             exps.append(out)
+        # if out == None:
+            # break
     return exps
 
 FLAG_IGNORE_LN = False
@@ -308,14 +207,14 @@ def verify(op,lhs,rhs):
 def exp(min,tokens):
     lhs = term(tokens)
     lookahead = peekNext(tokens)
-    while (lookahead != None) and (lookahead.val != "\n") and (lookahead.type in binaryops) and (opconfig[lookahead.type][0] >= min):
+    while (lookahead != None) and (lookahead.val != "\n" and lookahead.type != "EOF") and (lookahead.type in binaryops) and (opconfig[lookahead.type][0] >= min):
         op = getNext(tokens)
         n = opconfig[op.type][0]
         if opconfig[op.type][1] == 1:
             n += 1
         lhs = BinOp(op.type,lhs,exp(n,tokens))
         lookahead = peekNext(tokens)
-    if (lookahead != None) and (lookahead.type == "LINEEND"):
+    if lookahead != None and (lookahead.type == "LINEEND" or lookahead.type == "EOF"):
         getNext(tokens)
     return lhs
 
@@ -331,7 +230,7 @@ def term(tokens):
     # print("*********************************************")
     # pprint(current,indent=4)
     # pprint(tokens,indent=4)
-    if current == None:
+    if current == None or current.type == "EOF":
         return
     elif current.type == 'LPAREN':
         getNext(tokens)
@@ -385,7 +284,6 @@ def term(tokens):
                 print("Expected Identifiers")
                 sys.exit(0)
                 # break
-        # print(params)
         body = None
         n = peekNext(tokens)
         while n.val == "\n":
@@ -397,6 +295,8 @@ def term(tokens):
             body = exp(0,tokens)
         else:
             pass
+        # print(name)
+        # print(params)
         # print(body)
         return Func(name,params,body)
     elif current.type == "LCURL":
@@ -450,114 +350,29 @@ def term(tokens):
         print("Unexpected Error")
         sys.exit(1)
 
-opmap = {
-    "ADD": lambda x,y: x + y,
-    "SUBS": lambda x,y: x - y,
-    "MUL": lambda x,y: x * y,
-    "MOD": lambda x,y: x % y,
-    "DIV": lambda x,y: x / y,
-    "NEG": lambda x: -x,
-    "POS": lambda x: +x,
-    "NOT": lambda x: not(x),
-    "AND": lambda x,y: x and y,
-    "OR": lambda x,y: x or y,
-    "LT": lambda x,y: x < y,
-    "GT": lambda x,y: x > y,
-    "EQ": lambda x,y: x == y,
-    "GTEQ":lambda x,y: x >= y,
-    "LTEQ":lambda x,y: x <= y,
-    "NOTEQ": lambda x,y: x != y,
-    "IMP": lambda x,y: not(x) or y,
-    "EXP": math.pow,
-    "LPIPE": lambda x,y: y(x),
-    "RPIPE": lambda x,y: x(y)
-}
-
-bool_ops = ["NOT","AND","OR",""]
-num_ops = ["ADD","SUBS","DIV","MUL","EXP","NEG","POS"]
-
-def coerse(op,*params):
-    temp = []
-    if op in bool_ops:
-        for p in params:
-            if isinstance(p,int) or isinstance(p,float):
-                if p > 0:
-                    temp.append(True)
-                elif p == 0:
-                    temp.append(False)
-            else:
-                temp.append(p)
-    elif op in num_ops:
-        for p in params:
-            if isinstance(p,bool):
-                if p:
-                    temp.append(1)
-                else:
-                    temp.append(0)
-            else:
-                temp.append(p)
-    return temp
-
-def astToExp(ast):
-    pass
-
-class Env(dict):
-    def __init__(self , params = () , args = () , outer = None):
-        self.update(zip(params,args))
-        self.outer = outer
-    
-    def find(self,var):
-        if var in self:
-            return self[var];
-        elif self.outer != None:
-            return self.outer.find(var)
-        return None
-    
-    def updateVar(self,var,value):
-        if var in self:
-            self[var] = value
-            return value
-        elif self.outer != None:
-            return self.outer.updateVar(var,value)
-        else:
-            print("Error: Cannot update non-existant variable -->",var)
-            # sys.exit(1)
+ROOT = std_env()
 
 class BFunction(dict):
     def __init__(self, params, body, env):
         self.lexical_scope = env
         self.param_name = params
-        self.body = body    
+        self.body = body
 
     def __call__(self,*actual):
-        # print("Actual params")
-        # print(actual)
         frame = Env(outer=self.lexical_scope)
         less = False
+        frame.update({
+            "args":actual
+        })
         for var in range(len(self.param_name)):
-            # if var > len(actual):
-            #     less = True
-            #     frame.update({self.param_name[var]:None})
-            # else:
-            frame.update({self.param_name[var]:actual[var]})
+            if var > len(actual):
+                less = True
+                frame.update({self.param_name[var]:None})
+            else:
+                frame.update({self.param_name[var]:actual[var]})
         if less:
             print("Warning: fewer parameters passed")
-        # print(self.body)
-        # print("*--------Function Frame--------*")
-        # print(frame)
-        # print()
         return eval(self.body,frame)
-
-def std_env():
-    env = Env()
-    # env.update(vars(math))
-    env.update({
-        "print":print
-        # "abs":abs
-    })
-    return env
-
-ROOT = std_env()
 
 def eval(ast,env=ROOT):
     # print("-----------------Eval-----------------")
@@ -574,7 +389,7 @@ def eval(ast,env=ROOT):
                 temp = eval(exp,env)
                 if temp != '\n':
                     outcome.append(temp)
-            print(outcome)
+            # print(outcome)
             return outcome[-1]
         elif ast["type"] == "Func":
             f = BFunction(ast["params"],ast["body"],env)
@@ -585,7 +400,8 @@ def eval(ast,env=ROOT):
             if not callable(func):
                 print("Function required")
                 sys.exit(0)
-            params = [eval(e,env) for e in ast["actual"] if e != '\n']
+            # print(ast["actual"])
+            params = [eval(e,env) for e in ast["actual"] if e != None]
             # print(params)
             # print("lalalal")
             # print(ast["iden"])
@@ -629,61 +445,16 @@ def run(str):
     ast = parse(tokens)
     return eval(ast)
 
-def test(str):
-    tokens = tokenize(str)
-    print("printing")
-    pprint(tokens,indent=4)
-    ast = parse(tokens)
-    pprint(ast,indent=4)
-    pprint(eval(ast),indent=4)
 
-# test("""
-# def test2(a,b,c,d)
-# {
-#     print <| "Welcome to test2!!!" 
-#     a + b + c + d
-# }
+# t = tokenize("""
+# def circum(r) = 2*pi*r
 
-# test2(10,2000,400,-555) |> print
+# print(circum(3))
 # """)
-
-# test(
-# """
-# z := if(true & false) {
-#     x := 5
-#     x
-# } else (y := 10)
-
-# def f1(x) = x*3
-
-# def f2(x,y) {
-#     x + y
-# }
-
-# f1(10)
-
-# f2(1,f1(2))
-
-# print(10)
-
-# z
-# """
-# )
-
-# test("if true & (x := 5) then x + 10 else x")
-# print(eval(parse(tokenize(
-# """
-# z := if(true & false) {
-#     x := 5
-#     x
-# } else (y := 10)
-
-# z
-# """
-# ))))
-
-# test('x := "one"')
-
+# pprint(t,indent=4)
+# ast=parse(t)
+# pprint(ast,indent=4)
+# eval(ast)
 
 def repl():
     foreground(GREEN) 
@@ -709,5 +480,5 @@ if __name__ == "__main__":
         run(code)
         # interpreter.execute(code)
     else:
-        pass
-        # repl()
+        # pass
+        repl()

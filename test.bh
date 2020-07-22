@@ -13,12 +13,15 @@ def f2(y) {
 }
 print(f2(10))
 
+// Lexical Scoping
 f3 := def(x) { x^2 }
-f4 := dyn() {  }
 
+// Dynamic Scoping
+f4 := dyn() {  }
 
 k := [10,20,30,40]
 j := [1,2,3]
+f <- (11,22,33)
 print(mean(k))
 
 // Constant
@@ -33,10 +36,26 @@ x := (#f) in k holds m(f) do {
 
 }
 
+// Tagged Template strings
+sql`
+SELECT * FROM {x};
+`
+
+temp = html`
+<div>
+<h1>Hello World!</h1>
+<h2>I am an embedded DSL</h2>
+<h3>My name is {name} </h3>
+</div>
+`
+
+"Archan" |> temp |> render
+
 // can introduce code quotations
 <@ 
 f4(10,x + y)
 @>
+
 
 def f3(x) = {
     y := 2

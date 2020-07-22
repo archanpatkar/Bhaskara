@@ -1,0 +1,347 @@
+[
+    {
+        "type": "Binary",
+        "left": {
+            "type": "Atom",
+            "value": "z"
+        },
+        "op": "VAR",
+        "right": {
+            "type": "Cond",
+            "cond": {
+                "type": "Binary",
+                "left": true,
+                "op": "AND",
+                "right": false
+            },
+            "b1": {
+                "type": "Block",
+                "exp": [
+                    "\n",
+                    {
+                        "type": "Binary",
+                        "left": {
+                            "type": "Atom",
+                            "value": "x"
+                        },
+                        "op": "VAR",
+                        "right": 5
+                    },
+                    {
+                        "type": "Atom",
+                        "value": "x"
+                    }
+                ]
+            },
+            "b2": {
+                "type": "Binary",
+                "left": {
+                    "type": "Atom",
+                    "value": "y"
+                },
+                "op": "VAR",
+                "right": 10
+            }
+        }
+    },
+    {
+        "type": "Func",
+        "name": "f1",
+        "params": [
+            "x"
+        ],
+        "body": {
+            "type": "Binary",
+            "left": {
+                "type": "Atom",
+                "value": "x"
+            },
+            "op": "EXP",
+            "right": 3
+        }
+    },
+    {
+        "type": "Func",
+        "name": "f2",
+        "params": [
+            "x",
+            "y"
+        ],
+        "body": {
+            "type": "Block",
+            "exp": [
+                "\n",
+                {
+                    "type": "Binary",
+                    "left": {
+                        "type": "Atom",
+                        "value": "x"
+                    },
+                    "op": "ADD",
+                    "right": {
+                        "type": "Atom",
+                        "value": "y"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "type": "Apply",
+        "iden": {
+            "type": "Atom",
+            "value": "print"
+        },
+        "actual": [
+            {
+                "type": "Apply",
+                "iden": {
+                    "type": "Atom",
+                    "value": "f1"
+                },
+                "actual": [
+                    10
+                ]
+            }
+        ]
+    },
+    {
+        "type": "Binary",
+        "left": {
+            "type": "Atom",
+            "value": "out"
+        },
+        "op": "VAR",
+        "right": {
+            "type": "Apply",
+            "iden": {
+                "type": "Atom",
+                "value": "f2"
+            },
+            "actual": [
+                1,
+                {
+                    "type": "Apply",
+                    "iden": {
+                        "type": "Atom",
+                        "value": "f1"
+                    },
+                    "actual": [
+                        2
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "type": "Apply",
+        "iden": {
+            "type": "Atom",
+            "value": "print"
+        },
+        "actual": [
+            {
+                "type": "Atom",
+                "value": "out"
+            }
+        ]
+    },
+    {
+        "type": "Func",
+        "name": "fac",
+        "params": [
+            "n"
+        ],
+        "body": {
+            "type": "Cond",
+            "cond": {
+                "type": "Binary",
+                "left": {
+                    "type": "Atom",
+                    "value": "n"
+                },
+                "op": "EQ",
+                "right": 0
+            },
+            "b1": 1,
+            "b2": {
+                "type": "Binary",
+                "left": {
+                    "type": "Atom",
+                    "value": "n"
+                },
+                "op": "MUL",
+                "right": {
+                    "type": "Apply",
+                    "iden": {
+                        "type": "Atom",
+                        "value": "fac"
+                    },
+                    "actual": [
+                        {
+                            "type": "Binary",
+                            "left": {
+                                "type": "Atom",
+                                "value": "n"
+                            },
+                            "op": "SUBS",
+                            "right": 1
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "type": "Apply",
+        "iden": {
+            "type": "Atom",
+            "value": "print"
+        },
+        "actual": [
+            {
+                "type": "Binary",
+                "left": {
+                    "type": "Atom",
+                    "value": "fac"
+                },
+                "op": "RPIPE",
+                "right": 3
+            }
+        ]
+    },
+    {
+        "type": "Func",
+        "name": "test2",
+        "params": [
+            "a",
+            "b",
+            "c",
+            "d"
+        ],
+        "body": {
+            "type": "Block",
+            "exp": [
+                "\n",
+                {
+                    "type": "Binary",
+                    "left": {
+                        "type": "Atom",
+                        "value": "print"
+                    },
+                    "op": "RPIPE",
+                    "right": "Welcome to test2!!!"
+                },
+                {
+                    "type": "Binary",
+                    "left": {
+                        "type": "Binary",
+                        "left": {
+                            "type": "Binary",
+                            "left": {
+                                "type": "Atom",
+                                "value": "a"
+                            },
+                            "op": "ADD",
+                            "right": {
+                                "type": "Atom",
+                                "value": "b"
+                            }
+                        },
+                        "op": "ADD",
+                        "right": {
+                            "type": "Atom",
+                            "value": "c"
+                        }
+                    },
+                    "op": "ADD",
+                    "right": {
+                        "type": "Atom",
+                        "value": "d"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "type": "Binary",
+        "left": {
+            "type": "Binary",
+            "left": 4,
+            "op": "LPIPE",
+            "right": {
+                "type": "Atom",
+                "value": "fac"
+            }
+        },
+        "op": "LPIPE",
+        "right": {
+            "type": "Atom",
+            "value": "print"
+        }
+    },
+    {
+        "type": "Binary",
+        "left": {
+            "type": "Atom",
+            "value": "print"
+        },
+        "op": "RPIPE",
+        "right": {
+            "type": "Binary",
+            "left": {
+                "type": "Atom",
+                "value": "fac"
+            },
+            "op": "RPIPE",
+            "right": 5
+        }
+    },
+    {
+        "type": "Binary",
+        "left": {
+            "type": "Atom",
+            "value": "y"
+        },
+        "op": "ASGN",
+        "right": "hello world!"
+    },
+    {
+        "type": "Apply",
+        "iden": {
+            "type": "Atom",
+            "value": "print"
+        },
+        "actual": [
+            {
+                "type": "Atom",
+                "value": "y"
+            }
+        ]
+    },
+    {
+        "type": "Binary",
+        "left": {
+            "type": "Apply",
+            "iden": {
+                "type": "Atom",
+                "value": "test2"
+            },
+            "actual": [
+                10,
+                2000,
+                400,
+                {
+                    "type": "Unary",
+                    "op": "NEG",
+                    "right": 555
+                }
+            ]
+        },
+        "op": "LPIPE",
+        "right": {
+            "type": "Atom",
+            "value": "print"
+        }
+    }
+]

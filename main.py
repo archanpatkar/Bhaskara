@@ -65,6 +65,8 @@ def createKeyword(buff):
         return Token("BOOL",True)
     elif buff == "false":
         return Token("BOOL",False)
+    elif buff == "unit":
+        return Token("UNIT","unit")
     else:
         return Token(token_name[buff],buff)
 
@@ -264,6 +266,16 @@ def term(tokens):
             getNext(tokens)
             b2 = exp(0,tokens)
         return CondOp(cond,b1,b2)
+    elif current.type == "WHILE":
+        getNext(tokens)
+        cond = exp(0,tokens)
+        if peekNext(tokens).type == "LCURL":
+            pass
+        elif getNext(tokens).type != "DO":
+            print("Expected 'do'")
+            sys.exit(1)
+        body = exp(0,tokens)
+        return While(cond,body)
     elif current.type == "DEF":
         getNext(tokens)
         name = None
@@ -319,6 +331,9 @@ def term(tokens):
         getNext(tokens)
         return current.val
     elif current.type == "STR":
+        getNext(tokens)
+        return current.val
+    elif current.type == "UNIT":
         getNext(tokens)
         return current.val
     elif current.type == "IDEN":
@@ -429,6 +444,14 @@ def eval(ast,env=ROOT):
         elif ast["type"] == "Unary":
             # ast["right"] = eval(ast["right"],env)
             return opmap[ast["op"]](eval(ast["right"],env))
+        elif ast["type"] == "While":
+            cond = eval(ast["cond"],env)
+            out = ""
+            while cond:
+                out = eval(ast["body"],env)
+                cond = eval(ast["cond"],env)
+            # print(out)
+            return out
         elif ast["type"] == "Cond":
             # ast["cond"] = 
             if eval(ast["cond"],env):
@@ -449,13 +472,21 @@ def run(str):
 
 # t = tokenize("""
 # def circum(r) = 2*pi*r
-
+# i := 0
+# j := while i < 10 {
+#     print(i)
+#     i = i + 1
+#     unit
+# }
 # print(circum(3))
+# print(j)
 # """)
 # pprint(t,indent=4)
 # ast=parse(t)
 # pprint(ast,indent=4)
 # eval(ast)
+
+# eval(json.loads(open("factorial.json","r").read()))
 
 def repl():
     foreground(GREEN) 
@@ -482,9 +513,8 @@ if __name__ == "__main__":
                 jast = json.dumps(parse(tokenize(code)))
                 open(sys.argv[1].split(".")[0]+".json","w").write(jast)
         else:
-            # print(code)
+            print(code)
             run(code)
-        # interpreter.execute(code)
     else:
         # pass
         repl()

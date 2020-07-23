@@ -19,4 +19,7 @@ def Atom(value):
 def Apply(iden,actual):
     return { "type":"Apply", "iden":iden, "actual":actual }
 
+def While(cond,body):
+    return { "type":"While", "cond":cond, "body":body }
+
 # Add functions Loop, While Loop, Pattern Matcher etc.

@@ -31,4 +31,5 @@ print <| fac <| 5
 y = "hello world!"
 print(y)
 
-test2(10,2000,400,-555) |> print
+i := 0
+while i < 15 do (test2(10,2000,400,-555) |> print) & (i = i + 1)

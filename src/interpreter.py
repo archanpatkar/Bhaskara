@@ -51,6 +51,6 @@ def std_env():
     env.update(vars(math))
     env.update({
         "print":print,
-        "abs":abs
+        "len":len
     })
     return env

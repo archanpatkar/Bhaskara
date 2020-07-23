@@ -36,6 +36,14 @@ while i < 15 do (test2(i,i*2,i*2,i*4) |> print) & (i = i + 1)
 
 l1 := [10,20,30,40,50]
 
+print("using For loop")
 for i in l1 {
     i |> print
+}
+
+print("Using While loop")
+i := 0
+while(i < len(l1)){
+    l1[i] |> print
+    i = i + 1
 }

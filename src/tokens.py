@@ -4,7 +4,10 @@ ops = [
         "#","==",">","<",">=","<=","~=","[","]","{","}",
         ",","->","%","!",":","$"
     ]
-keywords = ["true","false","neither","both","if","then","else","def","unit","do","while"]
+keywords = [
+                "true","false","neither","both","if","then",
+                "else","def","unit","do","while","for","in"
+        ]
 white = [" ","\r","\t"]
 digits = ["0","1","2","3","4","5","6","7","8","9"]
 bools = ["T","F","N","B"]
@@ -33,6 +36,8 @@ token_name = {
     "else":"ELSE",
     "def":"DEF",
     "while":"WHILE",
+    "for":"FOR",
+    "in":"IN",
     "do":"DO",
     ",":"SEP",
     ";":"SEMI",

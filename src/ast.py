@@ -22,4 +22,12 @@ def Apply(iden,actual):
 def While(cond,body):
     return { "type":"While", "cond":cond, "body":body }
 
+def For(var,iter,body):
+    return { "type":"For", "var":var, "iter":iter, "body":body }
+
+def List(con): 
+    return { "type":"List", "con":con }
+
+def SAccessor(iden,index):
+    return { "type":"SAcc", "iden":iden, "index":index }
 # Add functions Loop, While Loop, Pattern Matcher etc.

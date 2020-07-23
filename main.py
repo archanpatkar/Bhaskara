@@ -266,6 +266,27 @@ def term(tokens):
             getNext(tokens)
             b2 = exp(0,tokens)
         return CondOp(cond,b1,b2)
+    elif current.type == "FOR":
+        getNext(tokens)
+        if peekNext(tokens).type != "IDEN":
+            print("Expected an identifier")
+            sys.exit(1)
+        iden = getNext(tokens).val
+        if peekNext(tokens).type != "IN":
+            print("Expected an `in`")
+            sys.exit(1)
+        getNext(tokens)
+        if peekNext(tokens).type != "IDEN":
+            print("Expected an identifier")
+            sys.exit(1)
+        iter = exp(0,tokens)
+        if peekNext(tokens).type == "LCURL":
+            pass
+        elif getNext(tokens).type != "DO":
+            print("Expected 'do'")
+            sys.exit(1)
+        body = exp(0,tokens)
+        return For(iden,iter,body)
     elif current.type == "WHILE":
         getNext(tokens)
         cond = exp(0,tokens)
@@ -323,7 +344,17 @@ def term(tokens):
         # print(block)
         return Block(block)
     elif current.type == "LSQB":
-        pass
+        getNext(tokens)
+        l = []
+        current = peekNext(tokens)
+        while current.type != "RSQB":
+            l.append(exp(0,tokens))
+            current = peekNext(tokens)
+            if current.type == "SEP":
+                getNext(tokens)
+                current = peekNext(tokens)
+        getNext(tokens)
+        return List(l)
     elif current.type == "NUM":
         getNext(tokens)
         return current.val
@@ -338,7 +369,8 @@ def term(tokens):
         return current.val
     elif current.type == "IDEN":
         i = Atom(getNext(tokens).val)
-        if peekNext(tokens).type == "LPAREN":
+        n = peekNext(tokens).type
+        if n == "LPAREN":
             # print("----Here----")
             # print(tokens)
             getNext(tokens)
@@ -358,6 +390,15 @@ def term(tokens):
                 # print(n)
             getNext(tokens)
             return Apply(i,params)
+        elif n == "LSQB":
+            getNext(tokens)
+            # params = []
+            index = exp(0,tokens)
+            # print(n)
+            if getNext(tokens).type != "RSQB":
+                print("Unmatched paren ']'")
+                sys.exit(1)
+            return SAccessor(i,index)
         return i
     elif current.type == "LINEEND":
         return getNext(tokens).val
@@ -452,6 +493,16 @@ def eval(ast,env=ROOT):
                 cond = eval(ast["cond"],env)
             # print(out)
             return out
+        elif ast["type"] == "For":
+            t = Env(outer=env)
+            iter = eval(ast["iter"],env)
+            for val in iter:
+                t.update({
+                    ast["var"]:val
+                })
+                out = eval(ast["body"],t)
+            # print(out)
+            return out
         elif ast["type"] == "Cond":
             # ast["cond"] = 
             if eval(ast["cond"],env):
@@ -461,6 +512,12 @@ def eval(ast,env=ROOT):
         elif ast["type"] == "Atom":
             # print(ast["value"])
             return env.find(ast["value"])
+        elif ast["type"] == "List":
+            l = [eval(e,env) for e in ast["con"]]
+            return l
+        elif ast["type"] == "SAcc":
+            obj = eval(ast["iden"],env)
+            return obj[eval(ast["index"],env)]
     else:
         return ast
 
@@ -480,6 +537,21 @@ def run(str):
 # }
 # print(circum(3))
 # print(j)
+# """)
+# pprint(t,indent=4)
+# ast=parse(t)
+# pprint(ast,indent=4)
+# eval(ast)
+
+# t = tokenize("""
+# l1 := [10,20,30,40]
+# print(l1)
+# l1[0]
+# print(l1[1])
+
+# for i in l1 {
+#     i |> print
+# }
 # """)
 # pprint(t,indent=4)
 # ast=parse(t)
@@ -513,8 +585,7 @@ if __name__ == "__main__":
                 jast = json.dumps(parse(tokenize(code)))
                 open(sys.argv[1].split(".")[0]+".json","w").write(jast)
         else:
-            print(code)
             run(code)
     else:
-        # pass
-        repl()
+        pass
+        # repl()

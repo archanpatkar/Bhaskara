@@ -6,7 +6,8 @@ ops = [
     ]
 keywords = [
                 "true","false","neither","both","if","then",
-                "else","def","unit","do","while","for","in"
+                "else","def","unit","do","while","for","in",
+                "lazy","force","assert"
         ]
 white = [" ","\r","\t"]
 digits = ["0","1","2","3","4","5","6","7","8","9"]
@@ -39,6 +40,10 @@ token_name = {
     "for":"FOR",
     "in":"IN",
     "do":"DO",
+    "lazy":"LAZY",
+    "force":"FORCE",
+    "!":"FORCE",
+    "!!": "ASSERT" ,
     ",":"SEP",
     ";":"SEMI",
     "@":"FORALL",
@@ -49,6 +54,8 @@ token_name = {
     "}":"RCURL",
     ":=":"VAR",
     "//":"COMM",
+    "/*":"LCOMM",
+    "*/":"RCOMM",
     "|>":"LPIPE",
     "<|":"RPIPE"
 }

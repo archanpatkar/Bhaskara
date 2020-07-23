@@ -32,4 +32,10 @@ y = "hello world!"
 print(y)
 
 i := 0
-while i < 15 do (test2(10,2000,400,-555) |> print) & (i = i + 1)
+while i < 15 do (test2(i,i*2,i*2,i*4) |> print) & (i = i + 1)
+
+l1 := [10,20,30,40,50]
+
+for i in l1 {
+    i |> print
+}

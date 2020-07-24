@@ -2,7 +2,7 @@ from collections import namedtuple
 ops = [
         "+","-","/","*","(",")","^","=","|","&","~","@",
         "#","==",">","<",">=","<=","~=","[","]","{","}",
-        ",","->","%","!",":","$"
+        ",","->","%","!",":","$","'",'"',".","?"
     ]
 keywords = [
                 "true","false","neither","both","if","then",
@@ -43,7 +43,7 @@ token_name = {
     "lazy":"LAZY",
     "force":"FORCE",
     "!":"FORCE",
-    "!!": "ASSERT" ,
+    "!!": "ASSERT",
     ",":"SEP",
     ";":"SEMI",
     "@":"FORALL",
@@ -57,12 +57,15 @@ token_name = {
     "/*":"LCOMM",
     "*/":"RCOMM",
     "|>":"LPIPE",
-    "<|":"RPIPE"
+    "<|":"RPIPE",
+    ".":"DOT",
+    "?.":"OPDOT",
+    ":":"COLON"
 }
 binaryops = [
                 "ADD","SUBS","DIV","MUL","EXP","OR","AND",
                 "LT","GT","EQ","IMP","NOTEQ","LTEQ","GTEQ",
-                "VAR","ASGN","LPIPE","RPIPE"
+                "VAR","ASGN","LPIPE","RPIPE","DOT","OPDOT"
             ]
 unaryops = ["SUBS","ADD","NOT"]
 Token = namedtuple("Token",["type","val"])

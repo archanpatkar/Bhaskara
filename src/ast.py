@@ -30,4 +30,8 @@ def List(con):
 
 def SAccessor(iden,index):
     return { "type":"SAcc", "iden":iden, "index":index }
-# Add functions Loop, While Loop, Pattern Matcher etc.
+
+def ObjectLit(kv):
+    return { "type":"Obj", "kv":kv }
+
+# Add Pattern Matcher, Sum types etc.

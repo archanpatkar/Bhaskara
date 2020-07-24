@@ -56,3 +56,40 @@ def sum() {
 }
 
 sum(1,2,3,4,5,6,7,8,9) |> print
+
+l1[0] = -1
+l1[1] = -2
+
+print(l1)
+
+obj1 := {
+    x:10,
+    y:20
+}
+
+print(obj1.x)
+print(obj1.y)
+print(obj1)
+
+pg1 := {
+    balance:0,
+    lt:0,
+    def deposit(v) {
+        if v > 0 {
+            balance = balance + v
+            lt = v
+        }
+    },
+    def withdraw(v) {
+        if v <= balance {
+            balance = balance - v
+            lt = -v
+        }
+    },
+    def statement() {
+        balance |> print
+        lt |> print
+    }
+}
+
+print(pg1)

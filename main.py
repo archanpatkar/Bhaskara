@@ -336,12 +336,51 @@ def term(tokens):
     elif current.type == "LCURL":
         getNext(tokens)
         block = []
+        objLit = False
+        lit = []
+        # print("-------------Parsing Block-----------------")
+        # print(tokens)
         current = peekNext(tokens)
         while current.type != "RCURL":
-            block.append(exp(0,tokens))
+            # if current.val == "\n":
+            #     getNext(tokens)
+            t = exp(0,tokens)
+            if peekNext(tokens).type == "COLON":
+                getNext(tokens)
+                if not objLit:
+                    lit = []
+                objLit = True
+                if len(block) > 0:
+                    # generate error for mixing of block and object literal  
+                    pass
+                value = exp(0,tokens)
+                n = peekNext(tokens)
+                if n.type != "RCURL" and n.val != "\n":
+                    # print(n)
+                    assert getNext(tokens).type == "SEP"
+                elif n.val == "\n":
+                    getNext(tokens)
+                lit.append((t,value))
+            elif objLit and isinstance(t,dict) and t["type"] == "Func":
+                if t["name"] == None:
+                    print("Function name required in object literal");
+                    sys.exit(1)
+                name = t["name"]
+                t["name"] = None
+                n = peekNext(tokens)
+                if n.type != "RCURL" and n.val != "\n":
+                    # print(n)
+                    assert getNext(tokens).type == "SEP"
+                elif n.val == "\n":
+                    getNext(tokens)
+                lit.append((name,t))
+            else:
+                block.append(t)
             current = peekNext(tokens)
         getNext(tokens)
         # print(block)
+        if objLit:
+            return ObjectLit(lit)
         return Block(block)
     elif current.type == "LSQB":
         getNext(tokens)
@@ -450,7 +489,8 @@ def eval(ast,env=ROOT):
             return outcome[-1]
         elif ast["type"] == "Func":
             f = BFunction(ast["params"],ast["body"],env)
-            env.update({ast["name"]:f})
+            if ast["name"] != None:
+                env.update({ast["name"]:f})
             return f
         elif ast["type"] == "Apply":
             func = eval(ast["iden"],env)
@@ -471,10 +511,35 @@ def eval(ast,env=ROOT):
                 val = eval(ast["right"],env)
                 env.update({name:val})
                 return val
-            if ast["op"] == "ASGN":
-                name = ast["left"]["value"]
-                val = eval(ast["right"],env)
-                return env.updateVar(name,val)
+            elif ast["op"] == "ASGN":
+                name = ast["left"]
+                if isinstance(name,dict) and name["type"] == "SAcc":
+                    obj = eval(name["iden"],env)
+                    index = eval(name["index"],env)
+                    val = eval(ast["right"],env)
+                    if isinstance(obj,list):
+                        obj[index] = val
+                    else:
+                        obj.update({index: val})
+                    return obj[index]
+                elif isinstance(name,dict) and (name.get("op") == "DOT" or name.get("op") == "OPDOT"):
+                    obj = eval(name["left"],env)
+                    index = name["right"]["value"]
+                    obj.update({index: eval(ast["right"],env)})
+                    return obj[index]
+                else:
+                    val = eval(ast["right"],env)
+                    return env.updateVar(name["value"],val)
+            elif ast["op"] == "DOT":
+                obj = eval(ast["left"],env)
+                index = ast["right"]["value"]
+                return obj[index]
+            elif ast["op"] == "OPDOT":
+                obj = eval(ast["left"],env)
+                index = ast["right"]["value"]
+                if obj.get(index):
+                    return obj[index]
+                return False
             else:
                 # print(ast)
                 # ast["left"] = eval(ast["left"],env)
@@ -515,6 +580,25 @@ def eval(ast,env=ROOT):
         elif ast["type"] == "List":
             l = [eval(e,env) for e in ast["con"]]
             return l
+        elif ast["type"] == "Obj":
+            obj = {}
+            for e in ast["kv"]:
+                print("Creating")
+                print(e)
+                if isinstance(e[0],str) or e[0]["type"] == "Atom":
+                    key = None
+                    if (not isinstance(e[0],str)) and e[0]["type"] == "Atom":
+                        key = e[0]["value"]
+                    else:
+                        key = e[0]
+                    obj.update({
+                        key:eval(e[1],env)
+                    })
+                else:
+                    print("Expected identifier or string")
+                    sys.exit(1)
+            # l = [obj.update({eval(e,env) for e in ast["kv"]]
+            return obj
         elif ast["type"] == "SAcc":
             obj = eval(ast["iden"],env)
             return obj[eval(ast["index"],env)]
@@ -585,7 +669,10 @@ if __name__ == "__main__":
                 jast = json.dumps(parse(tokenize(code)))
                 open(sys.argv[1].split(".")[0]+".json","w").write(jast)
         else:
-            run(code)
+            if sys.argv[1].split(".")[1] == "json":
+                eval(json.dumps(code))
+            else:
+                run(code)
     else:
         pass
         # repl()

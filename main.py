@@ -168,6 +168,18 @@ def tokenize(str):
             elif c == "<" and isNext("|",str,i):
                 joinNext(c,str,i,tokens)
                 i += 1
+            elif c == "*" and isNext("*",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
+            elif c == "<" and isNext("-",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
+            elif c == "?" and isNext(".",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
+            elif c == "<" and isNext("-",str,i):
+                joinNext(c,str,i,tokens)
+                i += 1
             else:
                 tokens.append(Token(token_name[c],c))
         elif isIdentifier(c):
@@ -349,7 +361,7 @@ def term(tokens):
                 getNext(tokens)
                 if not objLit:
                     lit = []
-                objLit = True
+                objLit =  True
                 if len(block) > 0:
                     # generate error for mixing of block and object literal  
                     pass
@@ -454,11 +466,12 @@ class BFunction(dict):
         self.param_name = params
         self.body = body
 
-    def __call__(self,*actual):
+    def __call__(self,*actual,this=None):
         frame = Env(outer=self.lexical_scope)
         less = False
         frame.update({
-            "args":actual
+            "args":actual,
+            "this":this
         })
         for var in range(len(self.param_name)):
             if var > len(actual):
@@ -532,14 +545,32 @@ def eval(ast,env=ROOT):
                     return env.updateVar(name["value"],val)
             elif ast["op"] == "DOT":
                 obj = eval(ast["left"],env)
-                index = ast["right"]["value"]
-                return obj[index]
+                if ast["right"]["type"] == "Apply":
+                    func = obj[ast["right"]["iden"]["value"]]
+                    if not callable(func):
+                        print("Function required")
+                        sys.exit(0)
+                    params = [eval(e,env) for e in ast["right"]["actual"] if e != None]
+                    return func(*params,this=obj)
+                else:
+                    index = ast["right"]["value"]
+                    return obj[index]
             elif ast["op"] == "OPDOT":
                 obj = eval(ast["left"],env)
-                index = ast["right"]["value"]
-                if obj.get(index):
-                    return obj[index]
-                return False
+                if ast["right"]["type"] == "Apply":
+                    func = obj.get(ast["right"]["iden"]["value"])
+                    if func is None:
+                        return False 
+                    if not callable(func):
+                        print("Function required")
+                        sys.exit(0)
+                    params = [eval(e,env) for e in ast["right"]["actual"] if e != None]
+                    return func(*params,this=obj)
+                else:
+                    index = ast["right"]["value"]
+                    if obj.get(index):
+                        return obj[index]
+                    return False
             else:
                 # print(ast)
                 # ast["left"] = eval(ast["left"],env)
@@ -583,8 +614,6 @@ def eval(ast,env=ROOT):
         elif ast["type"] == "Obj":
             obj = {}
             for e in ast["kv"]:
-                print("Creating")
-                print(e)
                 if isinstance(e[0],str) or e[0]["type"] == "Atom":
                     key = None
                     if (not isinstance(e[0],str)) and e[0]["type"] == "Atom":
@@ -674,5 +703,5 @@ if __name__ == "__main__":
             else:
                 run(code)
     else:
-        pass
-        # repl()
+        # pass
+        repl()

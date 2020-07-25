@@ -67,6 +67,8 @@ obj1 := {
     y:20
 }
 
+obj1.z = "hgfdhfdhfd"
+
 print(obj1.x)
 print(obj1.y)
 print(obj1)
@@ -76,20 +78,25 @@ pg1 := {
     lt:0,
     def deposit(v) {
         if v > 0 {
-            balance = balance + v
-            lt = v
+            this.balance = this.balance + v
+            this.lt = v
         }
     },
     def withdraw(v) {
-        if v <= balance {
-            balance = balance - v
-            lt = -v
+        if v <= this.balance {
+            this.balance = this.balance - v
+            this.lt = -v
         }
     },
     def statement() {
-        balance |> print
-        lt |> print
+        this.balance |> print
+        this.lt |> print
     }
 }
 
 print(pg1)
+pg1.deposit(10)
+pg1.withdraw(3)
+pg1.statement()
+
+print(obj1?.f1(10,20,30))

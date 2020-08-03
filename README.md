@@ -76,6 +76,7 @@ pg1?.transaction(1000)
 * Sum types (Disjoint union types)
 * Module system
 * Python FFI
+* In built testing
 * Lazy expressions
 * Optimized Goroutine scheduler and Channels
 * Tagged string literals

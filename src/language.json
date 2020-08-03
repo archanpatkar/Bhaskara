@@ -59,8 +59,7 @@
         "dyn",
         "type",
         "go",
-        "yield",
-        "yield*"
+        "yield"
     ],
     "white": [
         " ",

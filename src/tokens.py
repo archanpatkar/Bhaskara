@@ -7,7 +7,7 @@ ops = [
 keywords = [
                 "true","false","neither","both","if","then",
                 "else","def","unit","do","while","for","in",
-                "lazy","force","assert"
+                "lazy","force","assert","go","break","continue"
         ]
 white = [" ","\r","\t"]
 digits = ["0","1","2","3","4","5","6","7","8","9"]
@@ -31,7 +31,6 @@ token_name = {
     ">":"GT",
     "<":"LT",
     "==":"EQ",
-    "<->":"EQ",
     ">=":"GTEQ",
     "<=":"LTEQ",
     "~=":"NOTEQ",
@@ -46,6 +45,7 @@ token_name = {
     "do":"DO",
     "lazy":"LAZY",
     "force":"FORCE",
+    "go":"GO",
     "!":"FORCE",
     "!!": "ASSERT",
     ",":"SEP",
@@ -64,12 +64,14 @@ token_name = {
     "<|":"RPIPE",
     ".":"DOT",
     "?.":"OPDOT",
-    ":":"COLON"
+    ":":"COLON",
+    "??":"NULLISH"
 }
 binaryops = [
                 "ADD","SUBS","DIV","MUL","EXP","OR","AND",
                 "LT","GT","EQ","IMP","NOTEQ","LTEQ","GTEQ",
-                "VAR","ASGN","LPIPE","RPIPE","DOT","OPDOT"
+                "VAR","ASGN","LPIPE","RPIPE","DOT","OPDOT",
+                "NULLISH","LPAREN", "LSQB"
             ]
 unaryops = ["SUBS","ADD","NOT"]
 Token = namedtuple("Token",["type","val"])

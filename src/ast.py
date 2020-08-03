@@ -1,3 +1,4 @@
+# Convert to the Object system after it is fully defined
 def BinOp(op,left,right):
     return { "type":"Binary", "left":left, "op":op, "right":right }
 
@@ -33,5 +34,8 @@ def SAccessor(iden,index):
 
 def ObjectLit(kv):
     return { "type":"Obj", "kv":kv }
+
+def Go(ap):
+    return { "type":"Go", "ap":ap }
 
 # Add Pattern Matcher, Sum types etc.

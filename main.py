@@ -7,6 +7,7 @@ from src.tokens import *
 from src.ast import *
 from src.parser import *
 from src.interpreter import *
+from src.runtime.pool import Pool
 import json
 
 # भास्कर - A Math and Logic DSL
@@ -81,9 +82,8 @@ def parseIdentifier(str,i,l):
         else:
             i -= 1
             break
-        if isKeyword(buff):
-            i -= 1
-            return (createKeyword(buff),i)
+    if isKeyword(buff):
+        return (createKeyword(buff),i)
     return (Token("IDEN",buff),i)
 
 def parseString(str,i,l):
@@ -128,9 +128,11 @@ def tokenize(str):
         if c == "/" and isNext("/",str,i):
             i += 2
             c = str[i]
-            while c != "\n" and i < l:
+            while c != "\n":
                 i += 1
-                c = str[i]
+                if i < l:
+                    c = str[i]
+                else: break
         elif c == '"':
             t,i = parseString(str,i,l)
             # print(t)
@@ -309,6 +311,16 @@ def term(tokens):
             sys.exit(1)
         body = exp(0,tokens)
         return While(cond,body)
+    elif current.type == "GO":
+        getNext(tokens)
+        ap = exp(0,tokens)
+        # if peekNext(tokens).type == "LCURL":
+        #     pass
+        # print(ap)
+        if not (ap["type"] == "Apply" or ap["op"] == "DOT" or ap["op"] == "OPDOT"):
+            print("Expected a function or method application")
+            sys.exit(1)
+        return Go(ap)
     elif current.type == "DEF":
         getNext(tokens)
         name = None
@@ -454,11 +466,12 @@ def term(tokens):
     elif current.type == "LINEEND":
         return getNext(tokens).val
     else:
-        # print(tokens)
+        print(tokens)
         print("Unexpected Error")
         sys.exit(1)
 
 ROOT = std_env()
+GLOBAL_POOL = Pool(daemon=False)
 
 class BFunction(dict):
     def __init__(self, params, body, env):
@@ -518,6 +531,20 @@ def eval(ast,env=ROOT):
             r = func(*params)
             # print(r)
             return r
+        elif ast["type"] == "Go":
+            print(ast)
+            func = eval(ast["ap"]["iden"],env)
+            if not callable(func):
+                print("Function required")
+                sys.exit(0)
+            # print(ast["actual"])
+            params = [eval(e,env) for e in ast["ap"]["actual"] if e != None]
+            # print(params)
+            # print("lalalal")
+            # print(ast["iden"])
+            # r = 
+            # print(r)
+            return GLOBAL_POOL.execute(func,params)
         elif ast["type"] == "Binary":
             if ast["op"] == "VAR":
                 name = ast["left"]["value"]
@@ -611,6 +638,9 @@ def eval(ast,env=ROOT):
         elif ast["type"] == "List":
             l = [eval(e,env) for e in ast["con"]]
             return l
+        elif ast["type"] == "Go":
+            l = [eval(e,env) for e in ast["con"]]
+            return l
         elif ast["type"] == "Obj":
             obj = {}
             for e in ast["kv"]:
@@ -701,7 +731,11 @@ if __name__ == "__main__":
             if sys.argv[1].split(".")[1] == "json":
                 eval(json.dumps(code))
             else:
+                # print(code)
+                # print(tokenize(code))
                 run(code)
+                while not GLOBAL_POOL.jobs.isEmpty():
+                    pass
     else:
         # pass
         repl()

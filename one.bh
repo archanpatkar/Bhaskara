@@ -1,4 +1,9 @@
 // import complex
+// import complex as cmp
+// from complex import Complex as c
+// from complex import *
+
+
 z := if(true & false) {
     x := 5
     x
@@ -100,3 +105,26 @@ pg1.withdraw(3)
 pg1.statement()
 
 print(obj1?.f1(10,20,30))
+
+// (def () { print("hola!") })()
+
+o := go fac(15)
+
+print("Before")
+o.chain(def(f) { 
+    f |> print 
+})
+print("After")
+
+// Do notation
+// do {
+//     x <<= m
+//     y <<= n
+// }
+
+// m >>= f1 
+
+// def lazyFib() {
+//     yield 10
+//     yield 20
+// }

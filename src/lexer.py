@@ -1,5 +1,6 @@
 from tokens import *
 
+# Capture col and line number as well in the tokens
 def isWhite(str):
     if str in white:
         return True

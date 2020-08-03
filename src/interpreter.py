@@ -1,4 +1,6 @@
 import math
+from env import *
+from pool import Pool
 
 opmap = {
     "ADD": lambda x,y: x + y,
@@ -54,10 +56,6 @@ def std_env():
         "len":len
     })
     return env
-
-
-from env import *
-from pool import Pool
 
 ROOT = std_env()
 GLOBAL_POOL = Pool(daemon=False)

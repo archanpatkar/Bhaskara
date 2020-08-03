@@ -38,14 +38,17 @@ x := (#f) in k holds m(f) do {
 
 // Tagged Template strings
 sql`
-SELECT * FROM {x};
+SELECT * FROM {};
 `
+
+table := "students"
+print(sql`SELECT * FROM $table WHERE x < ${10}`)
 
 temp = html`
 <div>
 <h1>Hello World!</h1>
 <h2>I am an embedded DSL</h2>
-<h3>My name is {name} </h3>
+<h3>My name is {} </h3>
 </div>
 `
 

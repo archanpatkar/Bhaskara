@@ -21,7 +21,70 @@ for i in range(10) {
 }
 ```
 
-## Currently supports
+```
+pg1 := {
+    balance:0,
+    lt:0,
+    def deposit(v) {
+        if v > 0 {
+            this.balance = this.balance + v
+            this.lt = v
+        }
+    },
+    def withdraw(v) {
+        if v <= this.balance {
+            this.balance = this.balance - v
+            this.lt = -v
+        }
+    },
+    def statement() {
+        this.balance |> print
+        this.lt |> print
+    }
+}
 
+pg1.deposit(10)
+pg1.withdraw(3)
+pg1.statement()
+
+pg1?.transaction(1000)
+```
+
+## Currently supports
+* Control Flow
+    * if-else
+    * for loop
+    * while loop
+* Functions
+    * Normal functions
+    * Lambdas and Closures
+* Object
+    * Object literals
+    * List literals
+    * Indexing `name[exp]` sytax
+    * Dot syntax `obj.prop`
+    * Optional chaining
+    * Method invocation
+* Concurrency
+    * `go` syntax supported (internally uses a custom thread pool)
 
 ## Under implementation
+> This also includes long term goals
+* Pattern matching
+* Protypal inheritance (single & multiple)
+* Protocol based operator overloading
+* Sum types (Disjoint union types)
+* Module system
+* Python FFI
+* Lazy expressions
+* Optimized Goroutine scheduler and Channels
+* Tagged string literals
+* Code quotations
+* Proxy and AOP
+* Sugar syntax based on AOP for DbC (Design by Contract)
+* Monadic bind operator and Do notation
+* Dynamically scoped functions
+* Coroutines and generators
+* Homoiconic transforms(?)
+* Self hosting
+* Runtime persistance to JSON or Custom image format

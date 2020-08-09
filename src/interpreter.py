@@ -5,8 +5,9 @@ from runtime.pool import Pool
 # from lexer import Tokenizer
 
 # !! Improvements needed
-# Code smell very bad no defined abstractions 
-# currently ad-hoc evaluation
+# Code smell very bad 
+# No concretely defined abstractions 
+# Ad-hoc evaluation
 
 biopmap = {
     "ADD": lambda x,y: x + y,

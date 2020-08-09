@@ -1,8 +1,6 @@
 import threading
 import inspect
-# from tsqueue import TSQueue
 import os
-
 
 class TSQueue:
     def __init__(self):
@@ -12,14 +10,14 @@ class TSQueue:
     def enqueue(self,msg):
         with self.monitor:
             self.q.append(msg)
-            self.monitor.notify()
+            self.monitor.notify(1)
 
     def dequeue(self):
         with self.monitor:
             if(self.isEmpty()):
                 self.monitor.wait()
             msg = self.q[0]
-            self.q.remove(self.q[0])
+            self.q.pop(0)
             return msg
  
     def isEmpty(self):
@@ -72,6 +70,9 @@ class Worker(threading.Thread):
                     print(e)
                     p.reject(e)
 
+# TODO:
+    # Allow recursive chaining of Outcomes
+    # Follow Promise/A+ spec
 class Outcome:
     def __init__(self,executor=None):
         self.state = 0
@@ -94,7 +95,7 @@ class Outcome:
                 handler(self.value)
 
     def __getitem__(self,str):
-        if str == "chain":
+        if str == "chain" or str == "after":
             return lambda x,this=None: this.then(x)
 
     def then(self,success,failure=None):

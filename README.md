@@ -6,6 +6,8 @@ Bhaskara is an object functional language inspired by Javascript, Self, Python, 
 ```
 def fac(n) = if n == 0 then 1 else n * fac(n-1)
 
+for i in range(12) do (go fac(i) then def(v) = v |> print)
+
 result := (4 |> fac)
 
 result |> print
@@ -67,6 +69,8 @@ pg1?.transaction(1000)
     * Method invocation
 * Concurrency
     * `go` syntax supported (internally uses a custom thread pool)
+    * `go` returns an Async Future/Promise which is fulfilled with the return value of routine which was executed by the thread
+    * Syntactic support using `then`(sugar created over the promise returned) for chaining of continuation/lambda after `go` expression.
 
 ## Under implementation
 > This also includes long term goals
@@ -78,8 +82,11 @@ pg1?.transaction(1000)
 * Python FFI
 * In built testing
 * Lazy expressions
-* Optimized Goroutine scheduler and Channels
+* Channels
+* Optimized Goroutine scheduler
 * Tagged string literals
+* Haskell style List Comprehensions
+* Lisp style Macros
 * Code quotations
 * Proxy and AOP
 * Sugar syntax based on AOP for DbC (Design by Contract)

@@ -1,14 +1,9 @@
-// import complex
-// import complex as cmp
-// from complex import Complex as c
-// from complex import *
-
 z := if(true & false) {
     x := 5
     x
 } else (y := 10)
 
-def f1(x) = x^3
+def f1(x) = x**3
 
 def f2(x,y) {
     x + y
@@ -105,15 +100,15 @@ pg1.statement()
 
 print(obj1?.f1(10,20,30))
 
-// (def () { print("hola!") })()
+(def () { print("hola!") })()
 
-o := go fac(15)
+go fac(15) then def(v)= v |> print
 
-print("Before")
-o.chain(def(f) { 
-    f |> print 
-})
-print("After")
+// print("Before")
+// o.chain(def(f) { 
+   // f |> print 
+// })
+// print("After")
 
 // Do notation
 // do {

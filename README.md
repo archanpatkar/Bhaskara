@@ -95,4 +95,5 @@ pg1?.transaction(1000)
 * Coroutines and generators
 * Homoiconic transforms(?)
 * Self hosting
+* Gradual typing
 * Runtime persistance to JSON or Custom image format

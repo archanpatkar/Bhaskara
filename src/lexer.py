@@ -13,6 +13,7 @@ from error import lexing_error
 # Explore the possibility of making the tokenizer lazy, implementing 
 # the iterator protocol defering the creation of tokens until needed
 
+# Capture col and line number as well in the tokens
 def isWhite(str):
     if str in white:
         return True

@@ -1,10 +1,10 @@
-def test(str):
-    tokens = tokenize(str)
-    print("printing")
-    pprint(tokens,indent=4)
-    ast = parse(tokens)
-    pprint(ast,indent=4)
-    eval(ast)
+# def test(str):
+#     tokens = tokenize(str)
+#     print("printing")
+#     pprint(tokens,indent=4)
+#     ast = parse(tokens)
+#     pprint(ast,indent=4)
+#     eval(ast)
 
 # test("""
 # def test2(a,b,c,d)

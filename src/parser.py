@@ -213,6 +213,11 @@ class Parser:
         exp = self.exp(0)
         return Lazy(exp)
 
+    def parseForce(self):
+        self.tokenizer.consume()
+        exp = self.exp(0)
+        return Force(exp)
+
     def parseGo(self):
         self.tokenizer.consume()
         ap = self.exp(0)
@@ -269,6 +274,10 @@ class Parser:
             return self.parseList()
         elif current.type == "GO":
             return self.parseGo()
+        elif current.type == "LAZY":
+            return self.parseLazy()
+        elif current.type == "FORCE":
+            return self.parseForce()
         elif current.type == "IDEN":
             return Atom(self.tokenizer.consume().val)
         elif current.type == "NUM" or current.type == "BOOL" or current.type == "STR":

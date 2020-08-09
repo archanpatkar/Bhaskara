@@ -8,7 +8,6 @@ from runtime.pool import Pool
 # Code smell very bad 
 # No concretely defined abstractions 
 # Ad-hoc evaluation
-
 biopmap = {
     "ADD": lambda x,y: x + y,
     "SUBS": lambda x,y: x - y,

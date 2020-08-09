@@ -41,6 +41,9 @@ def Go(ap,then=None):
 def Lazy(exp):
     return { "type":"Lazy", "exp": exp }
 
+def Force(exp):
+    return { "type":"Force", "exp":exp }
+
 def Literal(v):
     return { "type":"Lit", "val":v }
 

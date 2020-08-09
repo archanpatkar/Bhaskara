@@ -35,7 +35,16 @@ def SAccessor(iden,index):
 def ObjectLit(kv):
     return { "type":"Obj", "kv":kv }
 
-def Go(ap):
-    return { "type":"Go", "ap":ap }
+def Go(ap,then=None):
+    return { "type":"Go", "ap":ap, "chain": then }
+
+def Lazy(exp):
+    return { "type":"Lazy", "exp": exp }
+
+def Literal(v):
+    return { "type":"Lit", "val":v }
+
+def Match(obj,cases,wild):
+    return { "type":"Match", "obj":obj , "cases":cases, "wild":wild }
 
 # Add Pattern Matcher, Sum types etc.

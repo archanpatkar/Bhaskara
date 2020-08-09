@@ -1,14 +1,19 @@
 import math
+# from env import *
+from runtime.pool import Pool
+# from parser import Parser
+# from lexer import Tokenizer
 
-opmap = {
+# !! Improvements needed
+# Code smell very bad no defined abstractions 
+# currently ad-hoc evaluation
+
+biopmap = {
     "ADD": lambda x,y: x + y,
     "SUBS": lambda x,y: x - y,
     "MUL": lambda x,y: x * y,
     "MOD": lambda x,y: x % y,
     "DIV": lambda x,y: x / y,
-    "NEG": lambda x: -x,
-    "POS": lambda x: +x,
-    "NOT": lambda x: not(x),
     "AND": lambda x,y: x and y,
     "OR": lambda x,y: x or y,
     "LT": lambda x,y: x < y,
@@ -22,6 +27,13 @@ opmap = {
     "LPIPE": lambda x,y: y(x),
     "RPIPE": lambda x,y: x(y)
 }
+
+unopmap = {
+    "SUBS": lambda x: -x,
+    "ADD": lambda x: +x,
+    "NOT": lambda x: not(x)
+}
+
 
 class Env(dict):
     def __init__(self , params = () , args = () , outer = None):
@@ -51,16 +63,13 @@ def std_env():
     env.update(vars(math))
     env.update({
         "print":print,
-        "len":len
+        "len":len,
+        "range":range
     })
     return env
 
-
-from env import *
-from pool import Pool
-
 ROOT = std_env()
-GLOBAL_POOL = Pool(daemon=False)
+GLOBAL_POOL = Pool(daemon=True)
 
 class BFunction(dict):
     def __init__(self, params, body, env):
@@ -69,20 +78,20 @@ class BFunction(dict):
         self.body = body
 
     def __call__(self,*actual,this=None):
+        if len(actual) < len(self.param_name):
+            self.prev = {}
+            for var in range(len(self.param_name)):
+                prev[self.param_name[var]] = actual[var]
+            curr = BFunction()
         frame = Env(outer=self.lexical_scope)
         less = False
         frame.update({
             "args":actual,
             "this":this
         })
+
         for var in range(len(self.param_name)):
-            if var > len(actual):
-                less = True
-                frame.update({self.param_name[var]:None})
-            else:
-                frame.update({self.param_name[var]:actual[var]})
-        if less:
-            print("Warning: fewer parameters passed")
+            frame.update({self.param_name[var]:actual[var]})
         return eval(self.body,frame)
 
 def eval(ast,env=ROOT):
@@ -94,6 +103,8 @@ def eval(ast,env=ROOT):
             outcome.append(eval(exp,env))
         return outcome
     elif isinstance(ast,dict):
+        if ast["type"] == "Lit":
+            return ast["val"]
         if ast["type"] == "Block":
             outcome = []
             for exp in ast["exp"]:
@@ -121,7 +132,7 @@ def eval(ast,env=ROOT):
             # print(r)
             return r
         elif ast["type"] == "Go":
-            print(ast)
+            # print(ast)
             func = eval(ast["ap"]["iden"],env)
             if not callable(func):
                 print("Function required")
@@ -132,8 +143,11 @@ def eval(ast,env=ROOT):
             # print("lalalal")
             # print(ast["iden"])
             # r = 
-            # print(r)
-            return GLOBAL_POOL.execute(func,params)
+            # print("here")
+            o = GLOBAL_POOL.execute(func,params)
+            if ast["chain"]:
+                o["chain"](eval(ast["chain"]),o)
+            return o
         elif ast["type"] == "Binary":
             if ast["op"] == "VAR":
                 name = ast["left"]["value"]
@@ -193,10 +207,10 @@ def eval(ast,env=ROOT):
                 # ast["right"] = eval(ast["right"],env)
                 # print(ast["left"])
                 # print(ast["right"])
-                return opmap[ast["op"]](eval(ast["left"],env),eval(ast["right"],env))
+                return biopmap[ast["op"]](eval(ast["left"],env),eval(ast["right"],env))
         elif ast["type"] == "Unary":
             # ast["right"] = eval(ast["right"],env)
-            return opmap[ast["op"]](eval(ast["right"],env))
+            return unopmap[ast["op"]](eval(ast["right"],env))
         elif ast["type"] == "While":
             cond = eval(ast["cond"],env)
             out = ""
@@ -227,9 +241,9 @@ def eval(ast,env=ROOT):
         elif ast["type"] == "List":
             l = [eval(e,env) for e in ast["con"]]
             return l
-        elif ast["type"] == "Go":
-            l = [eval(e,env) for e in ast["con"]]
-            return l
+        # elif ast["type"] == "Go":
+        #     l = [eval(e,env) for e in ast["con"]]
+        #     return l
         elif ast["type"] == "Obj":
             obj = {}
             for e in ast["kv"]:
@@ -253,7 +267,7 @@ def eval(ast,env=ROOT):
     else:
         return ast
 
-def run(str):
-    tokens = tokenize(str)
-    ast = parse(tokens)
-    return eval(ast)
+# def run(str):
+#     tokens = tokenize(str)
+#     ast = parse(tokens)
+#     return eval(ast)

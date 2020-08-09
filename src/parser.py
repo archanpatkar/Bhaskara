@@ -1,314 +1,294 @@
+from pprint import pprint
 from ast import *
+from tokens import *
+from lexer import Tokenizer
+from error import parse_error
 
-# Parser uses Precedence Climbing/Pratt parser LR(1) Algorithm
+# !! Improve \n handling, currently it is very simplistic 
+    # 1. (Create a language level standard for handling \n like Go or Swift etc.) 
+    # 2. (Or implement Automatic semicolon insertion like Javascript or Kotlin) 
+        # Good docs and resource -
+            # https://tc39.es/ecma262/#sec-automatic-semicolon-insertion
+            # https://temperlang.dev/design-sketches/parsing-program-structure.html#asi    
+# !! Add more error checks
+# !! Handle unexpected ends
+# !! Handle parsing edge cases
+
+# Parser uses Precedence Climbing/Pratt parser Algorithm
 # Based on: http://www.engr.mun.ca/~theo/Misc/exp_parsing.htm
-
-opconfig = {
-    "VAR":(0,0),
-    "ASGN":(0,0),
-    "LPIPE":(0,1),
-    "RPIPE":(0,0),
-    "OR":(1,1),
-    "AND":(2,1),
-    "IMP":(2,1),
-    "EQ":(3,1),
-    "NOTEQ":(3,1),
-    "LT":(4,1),
-    "LTEQ":(4,1),
-    "GTEQ":(4,1),
-    "GT":(4,1),
-    "ADD":(5,1),
-    "SUBS":(5,1),
-    "MUL":(6,1),
-    "MOD":(6,1),
-    "DIV":(6,1),
-    "EXP":(7,0),
-    "NEG":(8,0),
-    "POS":(8,0),
-    "NOT":(8,0),
-    "DOT":(9,1),
-    "OPDOT":(9,1)
+prectable = {
+    "VAR": (0, 0),
+    "ASGN": (0, 0),
+    "LPIPE": (0, 1),
+    "RPIPE": (0, 0),
+    "OR": (1, 1),
+    "AND": (2, 1),
+    "IMP": (2, 1),
+    "EQ": (3, 1),
+    "NOTEQ": (3, 1),
+    "LT": (4, 1),
+    "LTEQ": (4, 1),
+    "GTEQ": (4, 1),
+    "GT": (4, 1),
+    "ADD": (5, 1),
+    "SUBS": (5, 1),
+    "MUL": (6, 1),
+    "MOD": (6, 1),
+    "DIV": (6, 1),
+    "EXP": (7, 0),
+    "NEG": (8, 0),
+    "POS": (8, 0),
+    "NOT": (8, 0),
+    "DOT": (9, 1),
+    "LSQB": (9, 1),
+    "OPDOT": (9, 1),
+    "LPAREN": (10,1)
 }
 
-swap = {
-    "SUBS":"NEG",
-    "ADD":"POS"
-}
+class Parser:
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
 
+    def expect(self, token, msg):
+        taken = self.tokenizer.consume()
+        if taken.type != token:
+            if msg:
+                parse_error("Expected token {} not {}".format(msg,taken.val))
+            else:
+                parse_error("Expected token {} not {}".format(token,taken.val))
+        return taken
 
-def getNext(tokens):
-    if len(tokens) > 0:
-        return tokens.pop(0)
-    return None
+    def parse(self, code):
+        self.tokenizer.tokenize(code)
+        exps = []
+        while self.tokenizer.hasNext() and self.tokenizer.peek().type != "EOF":
+            out = self.exp(0)
+            if isinstance(out, dict):
+                exps.append(out)
+            self.expect("LINEEND","`\\n` or `;`")
+        return exps
 
-def peekNext(tokens):
-    if len(tokens) > 0:
-        return tokens[0]
-    return None
+    def unary(self):
+        current = self.tokenizer.consume()
+        return UnOp(current.type, self.exp(prectable[current.type][0]))
 
-def parse(tokens):
-    exps = []
-    while len(tokens) > 0:
-        out = exp(0,tokens)
-        if isinstance(out,dict):
-            exps.append(out)
-        # if out == None:
-            # break
-    return exps
-
-FLAG_IGNORE_LN = False
-
-def verify(op,lhs,rhs):
-    if op.type == "VAR" or op.type == "ASSGN":
-        if not(lhs["type"] == "Atom"):
-            print("Expected Identifier")
-            sys.exit(1)
-
-def exp(min,tokens):
-    lhs = term(tokens)
-    lookahead = peekNext(tokens)
-    while (lookahead != None) and (lookahead.val != "\n" and lookahead.type != "EOF") and (lookahead.type in binaryops) and (opconfig[lookahead.type][0] >= min):
-        op = getNext(tokens)
-        n = opconfig[op.type][0]
-        if opconfig[op.type][1] == 1:
-            n += 1
-        lhs = BinOp(op.type,lhs,exp(n,tokens))
-        lookahead = peekNext(tokens)
-    if lookahead != None and (lookahead.type == "LINEEND" or lookahead.type == "EOF"):
-        getNext(tokens)
-    return lhs
-
-def expect(ttype,tokens):
-    if peekNext(tokens).type == ttype:
-        return getNext(tokens)
-    foreground(RED) 
-    print("Expected {}".format(ttype))
-    foreground(WHITE) 
-
-def term(tokens):
-    current = peekNext(tokens)
-    # print("*********************************************")
-    # pprint(current,indent=4)
-    # pprint(tokens,indent=4)
-    if current == None or current.type == "EOF":
-        return
-    elif current.type == 'LPAREN':
-        getNext(tokens)
-        out = exp(0,tokens)
-        # print(out)
-        # print(peekNext(tokens))
-        if getNext(tokens).type != "RPAREN":
-            print("Unmatched paren '('")
-            sys.exit(1)
+    def parenExp(self):
+        self.tokenizer.consume()
+        self.tokenizer.ignore(True)
+        out = self.exp(0)
+        self.expect("RPAREN", "Unmatched paren `(`")
+        self.tokenizer.ignore(False)
         return out
-    elif current.type in unaryops:
-        getNext(tokens)
-        ch = swap.get(current.type)
-        if ch:
-            return UnOp(ch,exp(opconfig[current.type][0],tokens))
-        else:
-            return UnOp(current.type,exp(opconfig[current.type][0],tokens))
-    elif current.type == "IF":
-        getNext(tokens)
-        cond = exp(0,tokens)
-        if peekNext(tokens).type == "LCURL":
-            pass
-        elif getNext(tokens).type != "THEN":
-            print("Expected 'then'")
-            sys.exit(1)
-        b1 = exp(0,tokens)
+
+    def parseIF(self):
+        self.tokenizer.consume()
+        cond = self.exp(0)
+        if self.tokenizer.peek().type != "LCURL":
+            self.expect("THEN", "Expected `then`")
+        b1 = self.exp(0)
         b2 = None
-        t = peekNext(tokens)
+        t = self.tokenizer.peek()
         if t != None and t.type == "ELSE":
-            getNext(tokens)
-            b2 = exp(0,tokens)
-        return CondOp(cond,b1,b2)
-    elif current.type == "FOR":
-        getNext(tokens)
-        if peekNext(tokens).type != "IDEN":
-            print("Expected an identifier")
-            sys.exit(1)
-        iden = getNext(tokens).val
-        if peekNext(tokens).type != "IN":
-            print("Expected an `in`")
-            sys.exit(1)
-        getNext(tokens)
-        if peekNext(tokens).type != "IDEN":
-            print("Expected an identifier")
-            sys.exit(1)
-        iter = exp(0,tokens)
-        if peekNext(tokens).type == "LCURL":
-            pass
-        elif getNext(tokens).type != "DO":
-            print("Expected 'do'")
-            sys.exit(1)
-        body = exp(0,tokens)
-        return For(iden,iter,body)
-    elif current.type == "WHILE":
-        getNext(tokens)
-        cond = exp(0,tokens)
-        if peekNext(tokens).type == "LCURL":
-            pass
-        elif getNext(tokens).type != "DO":
-            print("Expected 'do'")
-            sys.exit(1)
-        body = exp(0,tokens)
-        return While(cond,body)
-    elif current.type == "GO":
-        getNext(tokens)
-        ap = exp(0,tokens)
-        # if peekNext(tokens).type == "LCURL":
-        #     pass
-        # print(ap)
-        if not (ap["type"] == "Apply" or ap["op"] == "DOT" or ap["op"] == "OPDOT"):
-            print("Expected a function or method application")
-            sys.exit(1)
-        return Go(ap)
-    elif current.type == "DEF":
-        getNext(tokens)
+            self.tokenizer.consume()
+            b2 = self.exp(0)
+        return CondOp(cond, b1, b2)
+
+    def parseMatch(self):
+        pass
+
+    def parseFor(self):
+        self.tokenizer.consume()
+        iden = self.expect("IDEN", "Expected an identifier").val
+        self.expect("IN", "Expected an `in`")
+        iter = self.exp(0)
+        if self.tokenizer.peek().type != "LCURL":
+            self.expect("DO", "Expected `do`")
+        body = self.exp(0)
+        return For(iden, iter, body)
+
+    def parseWhile(self):
+        self.tokenizer.consume()
+        cond = self.exp(0)
+        if self.tokenizer.peek().type != "LCURL":
+            self.expect("DO", "Expected `do`")
+        body = self.exp(0)
+        return While(cond, body)
+
+    def parseDecorator(self):
+        pass
+
+    def parseFunction(self):
+        self.tokenizer.consume()
         name = None
         params = []
-        if peekNext(tokens).type == "IDEN":
-            name = getNext(tokens).val
-        if getNext(tokens).type != "LPAREN":
-            pass
-        # print(name)
-        current = getNext(tokens)
+        if self.tokenizer.peek().type == "IDEN":
+            name = self.tokenizer.consume().val
+        self.expect("LPAREN", "expected `(`")
+        current = self.tokenizer.peek()
         while current != None and current.type != "RPAREN":
             if current.type == "IDEN":
+                self.tokenizer.consume()
                 params.append(current.val)
-                current = getNext(tokens)
+                current = self.tokenizer.peek()
             elif current.type == "SEP":
-                current = getNext(tokens)
-                continue
+                self.tokenizer.consume()
+                current = self.tokenizer.peek()
             else:
-                print("Expected Identifiers")
-                sys.exit(0)
-                # break
+                parse_error("Expected identifier not {}".format(current.val))
+        self.expect("RPAREN", "expected `)`")
         body = None
-        n = peekNext(tokens)
-        while n.val == "\n":
-            n = getNext(tokens)
-            n = peekNext(tokens)
-        if n.type == "ASGN" or n.type == "LCURL":
-            if n.type == "ASGN":
-                getNext(tokens)
-            body = exp(0,tokens)
+        current = self.tokenizer.peek()
+        while current.val == "\n":
+            current = self.tokenizer.consume()
+            current = self.tokenizer.peek()
+        if current.type == "ASGN" or current.type == "LCURL":
+            if current.type == "ASGN":
+                self.tokenizer.consume()
+            body = self.exp(0)
         else:
-            pass
-        # print(name)
-        # print(params)
-        # print(body)
-        return Func(name,params,body)
-    elif current.type == "LCURL":
-        getNext(tokens)
-        block = []
+            parse_error("Expected `=` or block")
+        return Func(name, params, body)
+
+    def parseCurl(self):
+        self.tokenizer.consume()
         objLit = False
+        block = []
         lit = []
-        # print("-------------Parsing Block-----------------")
-        # print(tokens)
-        current = peekNext(tokens)
+        current = self.tokenizer.peek()
         while current.type != "RCURL":
-            # if current.val == "\n":
-            #     getNext(tokens)
-            t = exp(0,tokens)
-            if peekNext(tokens).type == "COLON":
-                getNext(tokens)
-                if not objLit:
-                    lit = []
-                objLit =  True
+            if(current.type == "LINEEND"):
+                self.tokenizer.consume()
+                current = self.tokenizer.peek()
+                continue
+            t = self.exp(0)
+            if self.tokenizer.peek().type == "COLON":
+                self.tokenizer.consume()
+                objLit = True
                 if len(block) > 0:
-                    # generate error for mixing of block and object literal  
-                    pass
-                value = exp(0,tokens)
-                n = peekNext(tokens)
-                if n.type != "RCURL" and n.val != "\n":
-                    # print(n)
-                    assert getNext(tokens).type == "SEP"
-                elif n.val == "\n":
-                    getNext(tokens)
-                lit.append((t,value))
-            elif objLit and isinstance(t,dict) and t["type"] == "Func":
+                    parse_error("Cannot mix normal code with an object literal")
+                value = self.exp(0)
+                current = self.tokenizer.peek()
+                if current.type != "RCURL" and current.val != "\n":
+                    self.expect("SEP", "Expected `,`")
+                elif current.val == "\n":
+                    self.tokenizer.consume()
+                else:
+                    parse_error("Unexpected token `{}`".format(current.val))
+                lit.append((t, value))
+            elif objLit and isinstance(t, dict) and t["type"] == "Func":
                 if t["name"] == None:
-                    print("Function name required in object literal");
-                    sys.exit(1)
+                    parse_error("Function name required in object literal")
                 name = t["name"]
-                t["name"] = None
-                n = peekNext(tokens)
-                if n.type != "RCURL" and n.val != "\n":
-                    # print(n)
-                    assert getNext(tokens).type == "SEP"
-                elif n.val == "\n":
-                    getNext(tokens)
-                lit.append((name,t))
+                current = self.tokenizer.peek()
+                if current.type != "RCURL" and current.val != "\n":
+                    self.expect("SEP", "Expected `,`")
+                elif current.val == "\n":
+                    self.tokenizer.consume()
+                else:
+                    parse_error("Unexpected token `{}`".format(current.val))
+                lit.append((name, t))
             else:
                 block.append(t)
-            current = peekNext(tokens)
-        getNext(tokens)
-        # print(block)
+            current = self.tokenizer.peek()
+        self.expect("RCURL", "Expected `}`")
         if objLit:
             return ObjectLit(lit)
         return Block(block)
-    elif current.type == "LSQB":
-        getNext(tokens)
+
+    def parseList(self):
+        self.tokenizer.consume()
         l = []
-        current = peekNext(tokens)
+        current = self.tokenizer.peek()
         while current.type != "RSQB":
-            l.append(exp(0,tokens))
-            current = peekNext(tokens)
+            l.append(self.exp(0))
+            current = self.tokenizer.peek()
             if current.type == "SEP":
-                getNext(tokens)
-                current = peekNext(tokens)
-        getNext(tokens)
+                self.tokenizer.consume()
+                current = self.tokenizer.peek()
+        self.expect("RSQB", "Expected `[`")
         return List(l)
-    elif current.type == "NUM":
-        getNext(tokens)
-        return current.val
-    elif current.type == "BOOL":
-        getNext(tokens)
-        return current.val
-    elif current.type == "STR":
-        getNext(tokens)
-        return current.val
-    elif current.type == "UNIT":
-        getNext(tokens)
-        return current.val
-    elif current.type == "IDEN":
-        i = Atom(getNext(tokens).val)
-        n = peekNext(tokens).type
-        if n == "LPAREN":
-            # print("----Here----")
-            # print(tokens)
-            getNext(tokens)
-            params = []
-            n = peekNext(tokens)
-            # print(n)
-            while n.type != "RPAREN":
-                if n.type == "SEP":
-                    # print("passing by")
-                    getNext(tokens)
-                    n = peekNext(tokens)
-                    continue
-                e = exp(0,tokens)
+
+    def parseLazy(self):
+        self.tokenizer.consume()
+        exp = self.exp(0)
+        return Lazy(exp)
+
+    def parseGo(self):
+        self.tokenizer.consume()
+        ap = self.exp(0)
+        chain = None
+        if not (ap["type"] == "Apply" or ap["op"] == "DOT" or ap["op"] == "OPDOT"):
+            parse_error("Expected a function or method application")
+        if self.tokenizer.peek().type == "THEN":
+            self.tokenizer.consume()
+            chain = self.exp(0)
+        return Go(ap,chain)
+
+    def parseApp(self,lhs):
+        params = []
+        t = self.tokenizer.peek()
+        while t.type != "RPAREN":
+            if t.type == "SEP":
+                if len(params) == 0:
+                    parse_error("Expected `)`")
+                self.tokenizer.consume()
+            else:
+                e = self.exp(0)
                 if e != None:
                     params.append(e)
-                n = peekNext(tokens)
-                # print(n)
-            getNext(tokens)
-            return Apply(i,params)
-        elif n == "LSQB":
-            getNext(tokens)
-            # params = []
-            index = exp(0,tokens)
-            # print(n)
-            if getNext(tokens).type != "RSQB":
-                print("Unmatched paren ']'")
-                sys.exit(1)
-            return SAccessor(i,index)
-        return i
-    elif current.type == "LINEEND":
-        return getNext(tokens).val
-    else:
-        print(tokens)
-        print("Unexpected Error")
-        sys.exit(1)
+            t = self.tokenizer.peek()
+        self.expect("RPAREN", "Expected `)`")
+        return Apply(lhs, params)
+
+    def parseAcc(self,lhs):
+        index = self.exp(0)
+        self.expect("RSQB", "Unmatched paren `]`")
+        return SAccessor(lhs, index)
+
+    # Make this hashed(dict) based and dynamic according to the token type
+    # For both the term(prefix), exp(infix) also add support for postfix in exp
+    def term(self):
+        current = self.tokenizer.peek()
+        if current.type == "EOF" or current.type == "LINEEND":
+            return
+        elif current.type in unaryops:
+            return self.unary()
+        elif current.type == 'LPAREN':
+            return self.parenExp()
+        elif current.type == "IF":
+            return self.parseIF()
+        elif current.type == "FOR":
+            return self.parseFor()
+        elif current.type == "WHILE":
+            return self.parseWhile()
+        elif current.type == "DEF":
+            return self.parseFunction()
+        elif current.type == "LCURL":
+            return self.parseCurl()
+        elif current.type == "LSQB":
+            return self.parseList()
+        elif current.type == "GO":
+            return self.parseGo()
+        elif current.type == "IDEN":
+            return Atom(self.tokenizer.consume().val)
+        elif current.type == "NUM" or current.type == "BOOL" or current.type == "STR":
+            return Literal(self.tokenizer.consume().val)
+        else:
+            parse_error("Unexpected token `{}`".format(current.val))
+
+    def exp(self, min):
+        lhs = self.term()
+        lookahead = self.tokenizer.peek()
+        while lhs != None and (lookahead.type in binaryops) and (prectable[lookahead.type][0] >= min):
+            op = self.tokenizer.consume()
+            n = prectable[op.type][0]
+            if prectable[op.type][1] == 1:
+                n += 1
+            if op.type == "LPAREN":
+                lhs = self.parseApp(lhs)
+            elif op.type == "LSQB":
+                lhs = self.parseAcc(lhs)
+            else:
+                lhs = BinOp(op.type, lhs, self.exp(n))
+            lookahead = self.tokenizer.peek()
+        return lhs

@@ -1,17 +1,30 @@
 from collections import namedtuple
 ops = [
         "+","-","/","*","(",")","^","=","|","&","~","@",
-        "#","==",">","<",">=","<=","~=","[","]","{","}",
-        ",","->","%","!",":","$","'",'"',".","?"
+        "#",">","<","[","]","{","}",",","%","!",":",
+        "$","'",'"',".","?"
     ]
 keywords = [
-                "true","false","neither","both","if","then",
-                "else","def","unit","do","while","for","in",
-                "lazy","force","assert","go","break","continue"
+                "T","F","N","B","true","false","neither","both","if","then",
+                "else","def","unit","do","while","for","in","match","quote",
+                "macro","lazy","force","assert","go","break","continue","type",
+                "do"
         ]
 white = [" ","\r","\t"]
 digits = ["0","1","2","3","4","5","6","7","8","9"]
-bools = ["T","F","N","B"]
+lineend = ["\n",";"]
+double = {
+    "=":"=",
+    ">":"=",
+    "<":["=","|","-"],
+    "~":"=",
+    "-":">",
+    ":":"=",
+    "|":">",
+    "*":"*",
+    "?":".",
+}
+
 token_name = {
     "+":"ADD",
     "-":"SUBS",
@@ -22,9 +35,7 @@ token_name = {
     ")":"RPAREN",
     "**":"EXP",
     "|":"OR",
-    "v":"OR",
     "&":"AND",
-    "^":"AND",
     "~":"NOT",
     "->":"IMP",
     "=":"ASGN",
@@ -44,6 +55,7 @@ token_name = {
     "in":"IN",
     "do":"DO",
     "lazy":"LAZY",
+    "assert":"ASSERT",
     "force":"FORCE",
     "go":"GO",
     "!":"FORCE",
@@ -73,5 +85,5 @@ binaryops = [
                 "VAR","ASGN","LPIPE","RPIPE","DOT","OPDOT",
                 "NULLISH","LPAREN", "LSQB"
             ]
-unaryops = ["SUBS","ADD","NOT"]
+unaryops = ["SUBS","ADD","NOT","FORCE","ASSERT"]
 Token = namedtuple("Token",["type","val"])

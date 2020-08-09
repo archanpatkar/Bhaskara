@@ -6,12 +6,19 @@ type Color = Purple | Blue | RGB(r,g,b)
 
 type Maybe = Nothing | Just(x)
 
+type Tree = Leaf(v) | Node(x,y)
+
 def f1(x) = x^10
 def f2(y) {
     z := x + f1(y)*10
     sin((z & false)+1)
 }
 print(f2(10))
+
+macro archan = 10
+
+macro archan(x,y) = x+y
+
 
 // Lexical Scoping
 f3 := def(x) { x^2 }

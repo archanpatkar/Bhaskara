@@ -102,11 +102,63 @@ print(obj1?.f1(10,20,30))
 
 (def () { print("hola!") })()
 
-go fac(15) then def(v)= v |> print
+def log(f) {
+    print("here1!")
+    def() {
+        print("Entering")
+        f(args[0])
+        print("Exiting")
+    }
+}
+
+def log2(f) {
+    print("here2!")
+    print(f)
+    def() {
+        print("Entering2")
+        f(args[0])
+        print("Exiting2")
+    }
+}
+
+// n := 0
+
+@log2
+@log
+def test4(n) {
+    if n % 2 {
+        "odd" |> print
+    } else {
+        "even" |> print
+    }
+}
+
+test4(2)
+test4(2)
+
+l := lazy 5*4
+print(force l)
+
+for i in 1..15 {
+    go fac(i) then def(v) { 
+        v + (force l) |> print
+        test4(v)
+    }
+}
+
+a := #(
+	(defun add(x,y) (print (* (+ x y) 3)))
+	(add 10 20)
+    (${lazy def(x) => x+6} 30)
+)
+
+print("------------here---------------")
+print(a)
+
 
 // print("Before")
 // o.chain(def(f) { 
-   // f |> print 
+// f |> print 
 // })
 // print("After")
 

@@ -7,9 +7,10 @@ from error import parse_error
 # !! Improve \n handling, currently it is very simplistic 
     # 1. (Create a language level standard for handling \n like Go or Swift etc.) 
     # 2. (Or implement Automatic semicolon insertion like Javascript or Kotlin) 
-        # Good docs and resource -
+        # Good docs and resources -
             # https://tc39.es/ecma262/#sec-automatic-semicolon-insertion
             # https://temperlang.dev/design-sketches/parsing-program-structure.html#asi    
+    # 3. (To write an algorithm based on hueristics and language constructs to best improve DX)
 # !! Add more error checks
 # !! Handle unexpected ends
 # !! Handle parsing edge cases
@@ -30,6 +31,7 @@ prectable = {
     "LTEQ": (4, 1),
     "GTEQ": (4, 1),
     "GT": (4, 1),
+    "RANGE": (4, 1),
     "ADD": (5, 1),
     "SUBS": (5, 1),
     "MUL": (6, 1),
@@ -63,9 +65,10 @@ class Parser:
         exps = []
         while self.tokenizer.hasNext() and self.tokenizer.peek().type != "EOF":
             out = self.exp(0)
-            if isinstance(out, dict):
-                exps.append(out)
-            self.expect("LINEEND","`\\n` or `;`")
+            if out: exps.append(out)
+            end = self.tokenizer.peek()
+            if end and end.type != "EOF":
+                self.expect("LINEEND","`\\n` or `;`")
         return exps
 
     def unary(self):
@@ -88,6 +91,7 @@ class Parser:
         b1 = self.exp(0)
         b2 = None
         t = self.tokenizer.peek()
+        # Add elif
         if t != None and t.type == "ELSE":
             self.tokenizer.consume()
             b2 = self.exp(0)
@@ -115,7 +119,14 @@ class Parser:
         return While(cond, body)
 
     def parseDecorator(self):
-        pass
+        self.tokenizer.consume()
+        dec = self.exp(0)
+        # Bad Idea! ;)
+        self.tokenizer.ignore(True)
+        self.tokenizer.peek()
+        self.tokenizer.ignore(False)
+        base = self.exp(0)
+        return DecApply(dec,[base])
 
     def parseFunction(self):
         self.tokenizer.consume()
@@ -141,8 +152,8 @@ class Parser:
         while current.val == "\n":
             current = self.tokenizer.consume()
             current = self.tokenizer.peek()
-        if current.type == "ASGN" or current.type == "LCURL":
-            if current.type == "ASGN":
+        if current.type == "ASGN" or current.type == "ARROW" or current.type == "LCURL":
+            if current.type == "ASGN" or current.type == "ARROW":
                 self.tokenizer.consume()
             body = self.exp(0)
         else:
@@ -250,6 +261,30 @@ class Parser:
         self.expect("RSQB", "Unmatched paren `]`")
         return SAccessor(lhs, index)
 
+    def rsexpr(self):
+        self.expect("LPAREN","Expected `(`")
+        container = []
+        current = self.tokenizer.peek()
+        while current != None and current.type != "RPAREN":
+            if current.type == "LPAREN":
+                container.append(self.rsexpr())
+            else:
+                if current.type == "NUM" or current.type == "STR" or current.type == "BOOL":
+                    container.append(Literal(current.val))
+                else:
+                    container.append(Atom(current.val))
+                self.tokenizer.consume()
+            current = self.tokenizer.peek()
+        self.expect("RPAREN","Unmatched `(`")
+        return container
+
+    def parseSexpr(self):
+        self.tokenizer.consume()
+        self.tokenizer.ignore(True)
+        exp = SExpr(self.rsexpr())
+        self.tokenizer.ignore(False)
+        return exp
+
     # Make this hashed(dict) based and dynamic according to the token type
     # For both the term(prefix), exp(infix) also add support for postfix in exp
     def term(self):
@@ -262,6 +297,8 @@ class Parser:
             return self.parenExp()
         elif current.type == "IF":
             return self.parseIF()
+        elif current.type == "MATCH":
+            return self.parseMatch()
         elif current.type == "FOR":
             return self.parseFor()
         elif current.type == "WHILE":
@@ -278,6 +315,10 @@ class Parser:
             return self.parseLazy()
         elif current.type == "FORCE":
             return self.parseForce()
+        elif current.type == "FORALL":
+            return self.parseDecorator()
+        elif current.type == "EXISTS":
+            return self.parseSexpr()
         elif current.type == "IDEN":
             return Atom(self.tokenizer.consume().val)
         elif current.type == "NUM" or current.type == "BOOL" or current.type == "STR":
@@ -301,3 +342,18 @@ class Parser:
                 lhs = BinOp(op.type, lhs, self.exp(n))
             lookahead = self.tokenizer.peek()
         return lhs
+
+# p = Parser(Tokenizer())
+
+# pprint(p.parse(
+# """
+# #(
+#     (archan patkar jagrat patkar 10 20 30 40 50 60 70)
+#     (match x (10 (print "this")) (20 (print "this2")))
+#     (defmacro cond(x,y) !())
+#     (defun archan(x,y,z)
+#         (if (< x y) (print x) (print y))
+#     )
+#     (archan 10 20 30)
+# )
+# """),indent=4)

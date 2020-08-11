@@ -27,11 +27,9 @@ class Pool:
     def __init__(self,workers = os.cpu_count(),daemon=True):
         self.workers = []
         self.jobs = TSQueue()
-        # if workers == None: workers = 4
         for i in range(workers):
             worker = Worker(self)
             self.workers.append(worker)
-            # if daemon:
             worker.setDaemon(daemon)
             worker.start()
 

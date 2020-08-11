@@ -13,6 +13,10 @@ from error import lexing_error
 # Explore the possibility of making the tokenizer lazy, implementing 
 # the iterator protocol defering the creation of tokens until needed
 
+# Add embedded S-expression pre-parsing support at the lexer level which will lead to
+# potentially endless possibilities for creating DSLs(without the tokenization of 
+# the language itself) at the language level
+
 # Capture col and line number as well in the tokens
 def isWhite(str):
     if str in white:
@@ -23,7 +27,6 @@ def isNumber(str):
     if str in digits:
         return True
     return False
-
 
 def isIdentifier(str):
     n = ord(str)
@@ -65,13 +68,13 @@ class Tokenizer:
 
     def peek(self):
         if self.ignoreNL:
-            while self.tokens[0].type == "LINEEND":
+            while self.hasNext() and self.tokens[0].type == "LINEEND":
                 self.tokens.pop(0)
         return self.tokens[0]
 
     def consume(self):
         if self.ignoreNL:
-            while self.tokens[0].type == "LINEEND":
+            while self.hasNext() and self.tokens[0].type == "LINEEND":
                 self.tokens.pop(0)
         return self.tokens.pop(0)
 
@@ -84,7 +87,7 @@ class Tokenizer:
             if isNumber(c):
                 buff += c
                 self.current += 1
-            elif c == "." and not(decimal):
+            elif c == "." and self.str[self.current+1] != "." and not(decimal):
                 decimal = True
                 buff += c
                 self.current += 1

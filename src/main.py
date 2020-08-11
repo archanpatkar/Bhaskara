@@ -34,7 +34,7 @@ if __name__ == "__main__":
         code = open(sys.argv[1],"r").read()
         if len(sys.argv) > 2:
             if sys.argv[2] == "--compile":
-                jast = json.dumps(parse(tokenize(code)))
+                jast = json.dumps(parser.parse(code))
                 open(sys.argv[1].split(".")[0]+".json","w").write(jast)
         else:
             if sys.argv[1].split(".")[1] == "json":

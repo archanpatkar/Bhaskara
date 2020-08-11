@@ -25,7 +25,8 @@ biopmap = {
     "IMP": lambda x,y: not(x) or y,
     "EXP": math.pow,
     "LPIPE": lambda x,y: y(x),
-    "RPIPE": lambda x,y: x(y)
+    "RPIPE": lambda x,y: x(y),
+    "RANGE": lambda x,y: range(x,y)
 }
 
 unopmap = {
@@ -69,13 +70,14 @@ def std_env():
     return env
 
 ROOT = std_env()
-GLOBAL_POOL = Pool(daemon=True)
+GLOBAL_POOL = Pool(daemon=False)
 
 class BFunction(dict):
-    def __init__(self, params, body, env):
+    def __init__(self, params,body,name,env):
         self.lexical_scope = env
         self.param_name = params
         self.body = body
+        self.name = name
 
     def __call__(self,*actual,this=None):
         if len(actual) < len(self.param_name):
@@ -94,6 +96,20 @@ class BFunction(dict):
             frame.update({self.param_name[var]:actual[var]})
         return eval(self.body,frame)
 
+class Thunk(dict):
+    def __init__(self,exp,env):
+        self.exp = exp
+        self.env = env
+        self.reduced = False
+    
+    def __call__(self):
+        if self.reduced:
+            return self.exp
+        else:
+            self.reduced = True
+            self.exp = eval(self.exp,self.env)
+        return self.exp
+
 def eval(ast,env=ROOT):
     # print("-----------------Eval-----------------")
     # pprint(ast,indent=4)
@@ -105,6 +121,13 @@ def eval(ast,env=ROOT):
     elif isinstance(ast,dict):
         if ast["type"] == "Lit":
             return ast["val"]
+        if ast["type"] == "Lazy":
+            return Thunk(ast["exp"],env)
+        if ast["type"] == "Force":
+            exp = eval(ast["exp"],env)
+            if isinstance(exp,Thunk):
+                return exp()
+            return exp
         if ast["type"] == "Block":
             outcome = []
             for exp in ast["exp"]:
@@ -114,7 +137,7 @@ def eval(ast,env=ROOT):
             # print(outcome)
             return outcome[-1]
         elif ast["type"] == "Func":
-            f = BFunction(ast["params"],ast["body"],env)
+            f = BFunction(ast["params"],ast["body"],ast["name"],env)
             if ast["name"] != None:
                 env.update({ast["name"]:f})
             return f
@@ -130,6 +153,24 @@ def eval(ast,env=ROOT):
             # print(ast["iden"])
             r = func(*params)
             # print(r)
+            return r
+        elif ast["type"] == "DecApply":
+            func = eval(ast["iden"],env)
+            if not callable(func):
+                print("Function required")
+                sys.exit(0)
+            # print(ast["actual"])
+            params = [eval(ast["actual"][0],env)]
+            # print(params)
+            # print("lalalal")
+            # print(ast["iden"])
+            # print(func)
+            print(ast)
+            r = func(*params)
+            # print(params)
+            if isinstance(r,BFunction) and params[0].name:
+                r.name = params[0].name
+                env.update({r.name: r})
             return r
         elif ast["type"] == "Go":
             # print(ast)
@@ -174,6 +215,7 @@ def eval(ast,env=ROOT):
                     val = eval(ast["right"],env)
                     return env.updateVar(name["value"],val)
             elif ast["op"] == "DOT":
+                print(ast)
                 obj = eval(ast["left"],env)
                 if ast["right"]["type"] == "Apply":
                     func = obj[ast["right"]["iden"]["value"]]
@@ -209,6 +251,9 @@ def eval(ast,env=ROOT):
                 # print(ast["right"])
                 return biopmap[ast["op"]](eval(ast["left"],env),eval(ast["right"],env))
         elif ast["type"] == "Unary":
+            if ast["op"] == "PANIC":
+                print(eval(ast["right"],env))
+                sys.exit(1)
             # ast["right"] = eval(ast["right"],env)
             return unopmap[ast["op"]](eval(ast["right"],env))
         elif ast["type"] == "While":

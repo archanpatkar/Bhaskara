@@ -139,12 +139,31 @@ test4(2)
 l := lazy 5*4
 print(force l)
 
-for i in 1..15 {
-    go fac(i) then def(v) { 
-        v + (force l) |> print
-        test4(v)
-    }
+//for i in 1..15 {
+  //  go fac(i) then def(v) { 
+    //    v + (force l) |> print
+      //  test4(v)
+    //}
+//}
+
+
+def fib(n) => match n with
+                  | 0 => 0
+                  | 1 => 1
+                  | _ => fib(n-1) + fib(n-2)
+
+print <| "Fibonacci Seq:"
+print <| fib(8)
+
+
+obj1 := {
+    value: 10,
+    def __add__(y) => this.value + y,
+    def __call__() => print("hello")
 }
+
+print(obj1 + 5)
+obj1()
 
 a := #(
 	(defun add(x,y) (print (* (+ x y) 3)))
@@ -152,8 +171,8 @@ a := #(
     (${lazy def(x) => x+6} 30)
 )
 
-print("------------here---------------")
-print(a)
+//print("------------here---------------")
+//print(a)
 
 
 // print("Before")

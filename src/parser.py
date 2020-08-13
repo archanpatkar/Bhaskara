@@ -55,10 +55,20 @@ class Parser:
         taken = self.tokenizer.consume()
         if taken.type != token:
             if msg:
-                parse_error("Expected token {} not {}".format(msg,taken.val))
+                parse_error("{} not {}".format(msg,taken.val))
             else:
                 parse_error("Expected token {} not {}".format(token,taken.val))
         return taken
+
+    def eatWhitespace(self):
+        while self.tokenizer.peek().type == "LINEEND": 
+            self.tokenizer.consume()
+
+    def afterWhitespace(self):
+        current = 0
+        while self.tokenizer.tokens[current].type == "LINEEND": 
+            current += 1
+        return self.tokenizer.tokens[current]
 
     def parse(self, code):
         self.tokenizer.tokenize(code)
@@ -91,14 +101,93 @@ class Parser:
         b1 = self.exp(0)
         b2 = None
         t = self.tokenizer.peek()
-        # Add elif
+        # In progress --
+        other = []
+        while t != None and t.type == "ELIF":
+            self.tokenizer.consume()
+            econd = self.exp(0)
+            if self.tokenizer.peek().type != "LCURL":
+                self.expect("THEN", "Expected `then`")
+            d = self.exp(0)
+            other.append((econd,d))
+            t = self.tokenizer.peek()
         if t != None and t.type == "ELSE":
             self.tokenizer.consume()
             b2 = self.exp(0)
-        return CondOp(cond, b1, b2)
+        return CondOp(cond, b1, b2, other)
+
+    def parseMCase(self):
+        # Currently implementing basic literal case
+        # Later on will implement more novel patterns e.g. 
+        # Structural matching based on objects and lists
+        self.expect("OR","Expected `|`")
+        checker = []
+        n = self.tokenizer.peek()
+        while True:
+            # Add more cases for other patterns
+            if n.type == "NUM" or n.type == "BOOL" or n.type == "STR":
+                self.tokenizer.consume()
+                checker.append(Literal(n.val))
+            elif n.type == "IDEN":
+                if n.val == "_":
+                    self.tokenizer.consume()
+                    checker.append(True)
+                    break
+                else:
+                    # This part will become more complex after the addition 
+                    # of list matching, sum type matching etc.. 
+
+                    # if variable type pattern matcher
+                    self.tokenizer.consume()
+                    checker.append(Atom(n.val))
+                    break
+            else:
+                parse_error("Unknown pattern {}".format(n.val))
+            n = self.tokenizer.peek()
+            if n.type == "OR":
+                self.tokenizer.consume()
+                n = self.tokenizer.peek()
+            elif n.type == "AND":
+                self.tokenizer.consume()
+                n = self.tokenizer.peek()
+            else: break
+        # Guard
+        guard = None
+        n = self.tokenizer.peek()
+        if n.type == "WHEN":
+            self.tokenizer.consume()
+            guard = self.exp(0)
+        if len(checker) == 1:
+            checker = checker[0]
+        return (checker,guard)
 
     def parseMatch(self):
-        pass
+        flg = True
+        self.tokenizer.consume()
+        matched = self.exp(0)
+        if self.tokenizer.peek().type == "WITH":
+            flg = False
+        else:
+            self.expect("LCURL", "Expected `{`")
+        self.tokenizer.consume()
+        cases = []
+        self.eatWhitespace()
+        t = self.tokenizer.peek()
+        # t.type != "RCURL" and
+        while t != None and t.type == "OR":
+            self.eatWhitespace()
+            checker,guard = self.parseMCase()
+            self.expect("ARROW","Expected `=>`")
+            do = self.exp(0)
+            cases.append((checker,guard,do))
+            t = self.afterWhitespace()
+        if flg:
+            self.expect("RCURL", "Expected `}`")
+        # else:
+        #     # This is very bad but currently rigging it up 
+        #     # will change later
+        #     self.tokenizer.tokens.insert(0,Token("LINEEND","\n"))
+        return Match(matched,cases)
 
     def parseFor(self):
         self.tokenizer.consume()
@@ -121,10 +210,8 @@ class Parser:
     def parseDecorator(self):
         self.tokenizer.consume()
         dec = self.exp(0)
-        # Bad Idea! ;)
-        self.tokenizer.ignore(True)
-        self.tokenizer.peek()
-        self.tokenizer.ignore(False)
+        # Currently patched this together but think about it's implication!
+        self.eatWhitespace()
         base = self.exp(0)
         return DecApply(dec,[base])
 
@@ -344,7 +431,18 @@ class Parser:
         return lhs
 
 # p = Parser(Tokenizer())
-
+# pprint(p.parse(
+# """
+# match x {
+#     | 2 => print(2**2)
+#     | v when v > 5 => print(10*v)
+#     | _ => print(x)
+# }
+# """),indent=4)
+# match x with
+#     | 1 when true & false => 1*10
+#     | 2 => 20/2
+#     | _ => 0
 # pprint(p.parse(
 # """
 # #(

@@ -99,9 +99,9 @@ def SExpr(l):
     counter += 1
     return { "id":counter, "type":"SExpr", "l":l }
 
-def Match(obj,cases,wild):
+def Match(obj,cases):
     global counter
     counter += 1
-    return { "id": counter, "type":"Match", "obj":obj , "cases":cases, "wild":wild }
+    return { "id": counter, "type":"Match", "obj":obj , "cases":cases}
 
 # Add Pattern Matcher, Sum types etc.

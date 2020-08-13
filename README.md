@@ -1,6 +1,6 @@
 ### भास्कर - A Dynamic object functional programming language
 
-Bhaskara is an object functional language inspired by Javascript, Self, Python, Go and F# (generally from ML and Haskell family of languages). It is an expression oriented language where everything is an expression. The language supports prototypal object system with multiple inheritance. The language also has functional features like Auto-currying, pattern matching, sum types, lazy expressions, pipe operator etc. The language also provides Go like concurrency primitives i.e. Goroutines and Channels.
+Bhaskara is an experimental interpreted object functional language focused towards flexibility with it's dynamic nature and expression of metalinguistic abstractions(trying to facilitate language oriented programming), and  the eventual goal of creating a powerful reflective/meta-reflective system with the capabilities of self-modifying(homoiconic) code, surface level dynamic AOP using Proxies and more powerful substratum of dynamically changing runtime semantics(using a Metaobject Protocol which allows to blur the boundaries of things, action and interpretation creating a strange loop). The language is inspired by Javascript, Self, Python, Go, Smalltalk, F# (generally from ML and Haskell family of languages) and Lisp(and CLOS,Scheme,Clojure...). It is also an expression oriented language where everything is an expression. The language has a prototypal object system with multiple inheritance, has functional features like Auto-currying, pattern matching, sum types, lazy expressions, pipe operator etc. The language provides Go like concurrency primitives i.e. Goroutines and Channels.
 
 #### Example code
 ```
@@ -69,6 +69,10 @@ pg1?.transaction(1000)
     * if-elif-else
     * for loop
     * while loop
+    * pattern matching with guards
+        1. Literal based 
+        2. Variable based
+        3. Wildcard based
 * Functions
     * Normal functions
     * Lambdas and Closures
@@ -80,6 +84,7 @@ pg1?.transaction(1000)
     * Dot syntax `obj.prop`
     * Optional chaining
     * Method invocation
+    * Basic operator overloading
 * Concurrency
     * `go` syntax supported (internally uses a custom thread pool)
     * `go` returns an Async Future/Promise which is fulfilled with the return value of routine which was executed by the thread
@@ -89,17 +94,17 @@ pg1?.transaction(1000)
 
 ## Under implementation
 > This also includes long term goals
-* Pattern matching
 * Protypal inheritance (single & multiple)
-* Protocol based operator overloading
 * Sum types (Disjoint union types)
 * Module system
 * Python FFI
+* Tail call optimization
 * In built testing
 * Channels
 * Spreading and Destructuring
 * Optimized Goroutine scheduler
 * Tagged string literals
+* Scala like `_` based lambda literals
 * Haskell style List Comprehensions
 * Lisp style Macros
 * Code quotations
@@ -107,8 +112,8 @@ pg1?.transaction(1000)
 * Sugar syntax based on AOP for DbC (Design by Contract)
 * Monadic bind operator and Do notation
 * Dynamically scoped functions
-* Coroutines and generators
-* Homoiconic transforms(?)
+* Coroutines, generators and async-await(more specific form of do notation?) / Fibers(with first class continuations?)
+* Homoiconic transforms
 * Self hosted transpiler to Javascript (with Javascript FFI)
 * Gradual typing
 * Runtime persistance to JSON or Custom image format

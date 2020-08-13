@@ -1,5 +1,6 @@
 import math
 # from env import *
+import sys
 from runtime.pool import Pool
 # from parser import Parser
 # from lexer import Tokenizer
@@ -27,6 +28,20 @@ biopmap = {
     "LPIPE": lambda x,y: y(x),
     "RPIPE": lambda x,y: x(y),
     "RANGE": lambda x,y: range(x,y)
+}
+
+overload_sig = {
+    "ADD":"__add__",
+    "SUBS":"__sub__",
+    "MUL":"__mul__",
+    "DIV":"__div__",
+    "LT":"__lt__",
+    "GT":"__gt__",
+    "AND":"__and__",
+    "OR":"__or__",
+    "EQ":"__eq__",
+    "SHIFT":"__compose__",
+    "CALL":"__call__"
 }
 
 unopmap = {
@@ -121,6 +136,8 @@ def eval(ast,env=ROOT):
     elif isinstance(ast,dict):
         if ast["type"] == "Lit":
             return ast["val"]
+        if ast["type"] == "SExpr":
+            return ast["l"]
         if ast["type"] == "Lazy":
             return Thunk(ast["exp"],env)
         if ast["type"] == "Force":
@@ -141,17 +158,37 @@ def eval(ast,env=ROOT):
             if ast["name"] != None:
                 env.update({ast["name"]:f})
             return f
+        elif ast["type"] == "Match":
+            obj = eval(ast["obj"],env)
+            for case in ast["cases"]:
+                if eval(case[0],env) == obj:
+                    if (not case[1]) or eval(case[1],env):
+                        return eval(case[2],env)
+                elif case[0] == True:
+                   return eval(case[2],env) 
+            return None
         elif ast["type"] == "Apply":
+            obj = None
             func = eval(ast["iden"],env)
-            if not callable(func):
+            if not callable(func) and (not isinstance(func,dict)):
+                # print(dir(func))
+                # print(func.keys())
+                # print(func[overload_sig["CALL"]])
                 print("Function required")
-                sys.exit(0)
+                return
+                # sys.exit(0)
+            elif isinstance(func,dict) and func.get(overload_sig["CALL"]):
+                obj = func
+                # print(func)
+                func = func.get(overload_sig["CALL"])
             # print(ast["actual"])
             params = [eval(e,env) for e in ast["actual"] if e != None]
             # print(params)
             # print("lalalal")
             # print(ast["iden"])
-            r = func(*params)
+            r = None
+            if obj: r = func(*params,this=obj)
+            else: r = func(*params)
             # print(r)
             return r
         elif ast["type"] == "DecApply":
@@ -249,7 +286,16 @@ def eval(ast,env=ROOT):
                 # ast["right"] = eval(ast["right"],env)
                 # print(ast["left"])
                 # print(ast["right"])
-                return biopmap[ast["op"]](eval(ast["left"],env),eval(ast["right"],env))
+                left = eval(ast["left"],env)
+                right = eval(ast["right"],env)
+                if isinstance(left,dict) and ast["op"] != "LPIPE" and ast["op"] != "RPIPE":
+                    f = left[overload_sig[ast["op"]]]
+                    if not callable(f):
+                        print("Function required")
+                        sys.exit(0)
+                    r = f(right,this=left)
+                    return r
+                return biopmap[ast["op"]](left,right)
         elif ast["type"] == "Unary":
             if ast["op"] == "PANIC":
                 print(eval(ast["right"],env))

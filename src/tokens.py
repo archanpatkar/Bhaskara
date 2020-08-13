@@ -10,7 +10,7 @@ keywords = [
                 "T","F","N","B","true","false","neither","both","if","then",
                 "else","def","unit","do","while","for","in","match","quote",
                 "macro","lazy","force","assert","go","break","continue","type",
-                "do","elif","panic"
+                "do","elif","panic","when","type","with","to","yield"
         ]
 white = [" ","\r","\t"]
 digits = ["0","1","2","3","4","5","6","7","8","9"]
@@ -20,7 +20,7 @@ lineend = ["\n",";"]
 # from the compound ops field 
 double = {
     "=":["=",">"],
-    ">":"=",
+    ">":["=",">"],
     "<":["=","|","-"],
     "~":"=",
     "-":">",
@@ -58,6 +58,7 @@ token_name = {
     "else":"ELSE",
     "elif":"ELSEIF",
     "def":"DEF",
+    "when":"WHEN",
     "while":"WHILE",
     "for":"FOR",
     "in":"IN",
@@ -66,8 +67,10 @@ token_name = {
     "lazy":"LAZY",
     "assert":"ASSERT",
     "force":"FORCE",
+    "type":"TYPE",
     "panic":"PANIC",
     "go":"GO",
+    "with":"WITH",
     "!":"FORCE",
     "!!": "ASSERT",
     ",":"SEP",
@@ -85,6 +88,8 @@ token_name = {
     "*/":"RCOMM",
     "|>":"LPIPE",
     "<|":"RPIPE",
+    ">>":"SHIFT",
+    ">>=":"BIND",
     ".":"DOT",
     "?.":"OPDOT",
     ":":"COLON",

@@ -8,14 +8,14 @@ from error import lexing_error
 
 # 1| 1+3  5-3
 #         ^
-# Expect `\n` or `;` not number literal `5`
+# Expected `\n` or `;` not number literal `5`
 
 # Explore the possibility of making the tokenizer lazy, implementing 
 # the iterator protocol defering the creation of tokens until needed
 
 # Add embedded S-expression pre-parsing support at the lexer level which will lead to
-# potentially endless possibilities for creating DSLs(without the tokenization of 
-# the language itself) at the language level
+# potentially endless possibilities for creating DSLs(without using the tokenization of 
+# the language itself).
 
 # Capture col and line number as well in the tokens
 def isWhite(str):
@@ -87,7 +87,7 @@ class Tokenizer:
             if isNumber(c):
                 buff += c
                 self.current += 1
-            elif c == "." and self.str[self.current+1] != "." and not(decimal):
+            elif c == "." and (self.str[self.current+1] != "." or isNumber(self.str[self.current+1])) and not(decimal):
                 decimal = True
                 buff += c
                 self.current += 1

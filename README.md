@@ -1,67 +1,44 @@
 ### भास्कर - A Dynamic object functional programming language
 
-Bhaskara is an experimental interpreted object functional language focused towards flexibility with it's dynamic nature and expression of metalinguistic abstractions(trying to facilitate language oriented programming), and  the eventual goal of creating a powerful reflective/meta-reflective system with the capabilities of self-modifying(homoiconic) code, surface level dynamic AOP using Proxies and more powerful substratum of dynamically changing runtime semantics(using a Metaobject Protocol which allows to blur the boundaries of things, action and interpretation creating a strange loop). The language is inspired by Javascript, Self, Python, Go, Smalltalk, F# (generally from ML and Haskell family of languages) and Lisp(and CLOS,Scheme,Clojure...). It is also an expression oriented language where everything is an expression. The language has a prototypal object system with multiple inheritance, has functional features like Auto-currying, pattern matching, sum types, lazy expressions, pipe operator etc. The language provides Go like concurrency primitives i.e. Goroutines and Channels.
+Bhaskara is an experimental interpreted object functional language focused towards extreme flexibility, expression of metalinguistic abstractions(converging towards language oriented programming) and the eventual goal of creating a powerful reflective/meta-reflective system with the capabilities of self-modifying(homoiconic) code, Aspect Oriented Programming and dynamically changing runtime semantics(by providing a Metaobject Protocol). 
+
+This project serves as an explorational workbench for experimenting and testing idiosyncratic linguistic abstractions and language constructs, design patterns, dsls, runtime semantics etc. 
+
+##### Influenced directly or indirectly by
+Javascript, Self, Python, Go, Smalltalk, F#, OCaml, Haskell, Scala, Lisp, CLOS,Scheme, Clojure, Lua, C, Wolfram Language
 
 #### Example code
 ```
 def fac(n) = if n == 0 then 1 else n * fac(n-1)
 
-for i in 1..13 do (go fac(i) then def(v) => v |> print)
+pfac := fac >> print
 
-result := (4 |> fac)
+for i in 1..13 do go pfac(i)
 
-result |> print
+def fib(n) => match n with
+                  | 0 => 0
+                  | 1 => 1
+                  | _ => fib(n-1) + fib(n-2)
 
-result = result/2
+8 |> fib |> print
 
-result |> print
+def cons(car, cdr) => [car, cdr]
+def car(l) => force l[0]
+def cdr(l) => force l[1]
 
-printFac <- def(n) { n |> fac |> print }
-
-def log(f) {
-    def() {
-        print("Entering")
-        f(*args)
-        print("Exiting")
-    }
+def add1(n) {
+    cons(n,lazy add1(n+1))
 }
 
-@log
-def demo() => print("demo!")
-
-for i in range(10) {
-    demo()
-    go printFac(i)
-}
-```
-
-```
-pg1 := {
-    balance:0,
-    lt:0,
-    def deposit(v) {
-        if v > 0 {
-            this.balance = this.balance + v
-            this.lt = v
-        }
-    },
-    def withdraw(v) {
-        if v <= this.balance {
-            this.balance = this.balance - v
-            this.lt = -v
-        }
-    },
-    def statement() {
-        this.balance |> print
-        this.lt |> print
-    }
+def map(fn, l) {
+    cons(fn(car(l)), lazy map(fn,cdr(l)))
 }
 
-pg1.deposit(10)
-pg1.withdraw(3)
-pg1.statement()
-
-pg1?.transaction(1000)
+n := map(add1(0), def(v) => v**2)
+for i in 0..20 {
+    print <| car(n)
+    n = cdr(n)
+}
 ```
 
 ## Currently supports
@@ -94,26 +71,28 @@ pg1?.transaction(1000)
 
 ## Under implementation
 > This also includes long term goals
-* Protypal inheritance (single & multiple)
+* Prototypal inheritance (single & multiple)
 * Sum types (Disjoint union types)
 * Module system
 * Python FFI
 * Tail call optimization
 * In built testing
 * Channels
-* Spreading and Destructuring
+* Destructuring
 * Optimized Goroutine scheduler
 * Tagged string literals
-* Scala like `_` based lambda literals
+* Scala like `_` based lambda literal transformations
 * Haskell style List Comprehensions
 * Lisp style Macros
 * Code quotations
 * Proxy and AOP
+* RegExp Literals
 * Sugar syntax based on AOP for DbC (Design by Contract)
 * Monadic bind operator and Do notation
-* Dynamically scoped functions
-* Coroutines, generators and async-await(more specific form of do notation?) / Fibers(with first class continuations?)
+* Additonal call by name eval strategy for thunks
+* Dynamically scoped functions/thunks
+* Coroutines, async-await(more specific form of do notation?) and First Class Continuations?
 * Homoiconic transforms
 * Self hosted transpiler to Javascript (with Javascript FFI)
-* Gradual typing
+* Gradual typing (Based on gradually typed hindley-milner with dynamic type inference: [ref](https://dl.acm.org/doi/10.1145/3290331))
 * Runtime persistance to JSON or Custom image format

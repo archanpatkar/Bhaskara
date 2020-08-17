@@ -1,4 +1,4 @@
-z := if(true & false) {
+x := if(true & false) {
     x := 5
     x
 } else (y := 10)
@@ -146,7 +146,6 @@ print(force l)
     //}
 //}
 
-
 def fib(n) => match n with
                   | 0 => 0
                   | 1 => 1
@@ -155,14 +154,62 @@ def fib(n) => match n with
 print <| "Fibonacci Seq:"
 print <| fib(8)
 
+def cons(car, cdr) => [car, cdr]
+def car(l) => force l[0]
+def cdr(l) => force l[1]
+
+def stream(start) {
+    {
+        current: start,
+        def next() {
+            temp := car(this.current)
+            this.current = cdr(this.current)
+            temp
+        },
+        def take(n) {
+            arr := 0..n
+            for i in arr do arr[i] = this.next()
+            arr
+        }
+    }
+}
+
+def add1(n) {
+    cons(lazy n,lazy add1(n+1))
+}
+
+st1 := stream(add1(10))
+for i in 0..21 do st1.next() |> print
+
+print(st1.take(10))
+
+archan := "Archan Patkar"
+
+print <| 10
+print <| 20
+print <| archan
+
+
+l1 := [10,20,30,40,50]
+
+// l1 map _+1
+
+// [x*x*y | x <- 1..8, y <- 2..20, x % 2]
+
+def square(x) => x*x
 
 obj1 := {
     value: 10,
     def __add__(y) => this.value + y,
-    def __call__() => print("hello")
+    def __call__() {
+        print("this is amazing!")
+        print("hello")
+    } 
 }
 
 print(obj1 + 5)
+print(obj1 + 11)
+obj1()
 obj1()
 
 a := #(

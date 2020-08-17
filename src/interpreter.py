@@ -5,6 +5,7 @@ from runtime.pool import Pool
 # from parser import Parser
 # from lexer import Tokenizer
 
+# Refactor to CPS style
 # !! Improvements needed
 # Code smell very bad 
 # No concretely defined abstractions 
@@ -27,7 +28,7 @@ biopmap = {
     "EXP": math.pow,
     "LPIPE": lambda x,y: y(x),
     "RPIPE": lambda x,y: x(y),
-    "RANGE": lambda x,y: range(x,y)
+    "RANGE": lambda x,y: list(range(x,y))
 }
 
 overload_sig = {
@@ -170,14 +171,16 @@ def eval(ast,env=ROOT):
         elif ast["type"] == "Apply":
             obj = None
             func = eval(ast["iden"],env)
-            if not callable(func) and (not isinstance(func,dict)):
+            print(ast["iden"])
+            print(func)
+            if (not callable(func)) and (not isinstance(func,dict) and func.get(overload_sig["CALL"]) == None):
                 # print(dir(func))
                 # print(func.keys())
                 # print(func[overload_sig["CALL"]])
                 print("Function required")
                 return
                 # sys.exit(0)
-            elif isinstance(func,dict) and func.get(overload_sig["CALL"]):
+            if isinstance(func,dict) and func.get(overload_sig["CALL"]) != None:
                 obj = func
                 # print(func)
                 func = func.get(overload_sig["CALL"])
@@ -186,11 +189,13 @@ def eval(ast,env=ROOT):
             # print(params)
             # print("lalalal")
             # print(ast["iden"])
-            r = None
-            if obj: r = func(*params,this=obj)
-            else: r = func(*params)
+            # r = None
+            if obj: 
+                return func(*params,this=obj)
+            else: 
+                return func(*params)
             # print(r)
-            return r
+            # return r
         elif ast["type"] == "DecApply":
             func = eval(ast["iden"],env)
             if not callable(func):
@@ -246,7 +251,12 @@ def eval(ast,env=ROOT):
                 elif isinstance(name,dict) and (name.get("op") == "DOT" or name.get("op") == "OPDOT"):
                     obj = eval(name["left"],env)
                     index = name["right"]["value"]
-                    obj.update({index: eval(ast["right"],env)})
+                    print("this is here!")
+                    print(obj)
+                    print(index)
+                    val = eval(ast["right"],env)
+                    print(val)
+                    obj.update({index: val})
                     return obj[index]
                 else:
                     val = eval(ast["right"],env)
@@ -263,6 +273,9 @@ def eval(ast,env=ROOT):
                     return func(*params,this=obj)
                 else:
                     index = ast["right"]["value"]
+                    print("Accessing!")
+                    print(obj)
+                    print(index)
                     return obj[index]
             elif ast["op"] == "OPDOT":
                 obj = eval(ast["left"],env)

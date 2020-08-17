@@ -320,6 +320,7 @@ class Parser:
         self.tokenizer.consume()
         ap = self.exp(0)
         chain = None
+	
         if not (ap["type"] == "Apply" or ap["op"] == "DOT" or ap["op"] == "OPDOT"):
             parse_error("Expected a function or method application")
         if self.tokenizer.peek().type == "THEN":
@@ -428,7 +429,10 @@ class Parser:
             else:
                 lhs = BinOp(op.type, lhs, self.exp(n))
             lookahead = self.tokenizer.peek()
+	# Add logic for auto application of functions to increase the dsl features 
+	# Allowing something like repeat 5 { print <| "repeating this!" } 
         return lhs
+
 
 # p = Parser(Tokenizer())
 # pprint(p.parse(

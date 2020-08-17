@@ -11,7 +11,7 @@ Javascript, Self, Python, Go, Smalltalk, F#, OCaml, Haskell, Scala, Lisp, CLOS,S
 ```
 def fac(n) = if n == 0 then 1 else n * fac(n-1)
 
-pfac := fac >> print
+pfac <- fac >> print
 
 for i in 1..13 do go pfac(i)
 

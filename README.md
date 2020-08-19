@@ -5,7 +5,7 @@ Bhaskara is an experimental interpreted object functional language focused towar
 This project serves as an explorational workbench for experimenting and testing idiosyncratic linguistic abstractions and language constructs, design patterns, dsls, runtime semantics etc. 
 
 ##### Influenced directly or indirectly by
-Javascript, Self, Python, Go, Smalltalk, F#, OCaml, Haskell, Scala, Lisp, CLOS,Scheme, Clojure, Lua, C, Wolfram Language
+Javascript, Self, Python, Go, Smalltalk, F#, OCaml, Haskell, Scala, Lisp, CLOS, Scheme, Clojure, Lua, C, Wolfram Language
 
 #### Example code
 ```
@@ -66,8 +66,13 @@ for i in 0..20 {
     * `go` syntax supported (internally uses a custom thread pool)
     * `go` returns an Async Future/Promise which is fulfilled with the return value of routine which was executed by the thread
     * Syntactic support using `then`(sugar created over the promise returned) for chaining of continuation/lambda after `go` expression.
-* Lazy expressions supported
-* Basic embedded S-Expression support
+* Lazy expressions are supported
+* Embedded S-Expression support
+    * Allowed to pass around as literals
+    * Working on allowing templatization
+* String templates
+    * Currently working on templatization
+    * Next will be allowing tagging template literals
 
 ## Under implementation
 > This also includes long term goals
@@ -85,9 +90,9 @@ for i in 0..20 {
 * Haskell style List Comprehensions
 * Lisp style Macros
 * Code quotations
-* Proxy and AOP
 * RegExp Literals
-* Sugar syntax based on AOP for DbC (Design by Contract)
+* Proxy and AOP
+* Sugar syntax based on AOP for DbC (Design by Contract e.g preconditions, postconditions etc.)
 * Monadic bind operator and Do notation
 * Additonal call by name eval strategy for thunks
 * Dynamically scoped functions/thunks
@@ -96,3 +101,4 @@ for i in 0..20 {
 * Self hosted transpiler to Javascript (with Javascript FFI)
 * Gradual typing (Based on gradually typed hindley-milner with dynamic type inference: [ref](https://dl.acm.org/doi/10.1145/3290331))
 * Runtime persistance to JSON or Custom image format
+* Unicode support

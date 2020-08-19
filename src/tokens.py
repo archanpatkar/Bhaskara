@@ -9,7 +9,7 @@ ops = [
 keywords = [
                 "T","F","N","B","true","false","neither","both","if","then",
                 "else","def","unit","do","while","for","in","match","quote",
-                "macro","lazy","force","assert","go","break","continue","type",
+                "macro", "unquote", "lazy","force","assert","go","break","continue","type",
                 "do","elif","panic","when","type","with","to","yield"
         ]
 white = [" ","\r","\t"]

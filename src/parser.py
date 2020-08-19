@@ -79,6 +79,7 @@ class Parser:
             end = self.tokenizer.peek()
             if end and end.type != "EOF":
                 self.expect("LINEEND","`\\n` or `;`")
+            self.eatWhitespace()
         return exps
 
     def unary(self):

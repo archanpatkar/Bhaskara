@@ -1,4 +1,4 @@
-<img src="Bhaskara.png" />
+<img src="Bhaskara.png" height="30em" width="45em"/>
 
 ### भास्कर - A Dynamic object functional programming language
 

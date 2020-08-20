@@ -1,3 +1,5 @@
+<img src="Bhaskara.png" />
+
 ### भास्कर - A Dynamic object functional programming language
 
 Bhaskara is an experimental interpreted object functional language focused towards extreme flexibility, expression of metalinguistic abstractions(converging towards language oriented programming) and the eventual goal of creating a powerful reflective/meta-reflective system with the capabilities of self-modifying(homoiconic) code, Aspect Oriented Programming and dynamically changing runtime semantics(by providing a Metaobject Protocol). 

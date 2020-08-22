@@ -1,11 +1,11 @@
 ### भास्कर - A Dynamic object functional programming language
 
-Bhaskara is an experimental interpreted object functional language focused towards extreme flexibility, expression of metalinguistic abstractions(converging towards language oriented programming) and the eventual goal of creating a powerful reflective/meta-reflective system with the capabilities of self-modifying(homoiconic) code, Aspect Oriented Programming and dynamically changing runtime semantics(by providing a Metaobject Protocol). 
+Bhaskara is an experimental interpreted object functional language focused towards extreme flexibility, expression of metalinguistic abstractions(trying to support towards language oriented programming) and the eventual goal of creating a powerful reflective/meta-reflective system with the capabilities of self-modifying(homoiconic) code, Aspect Oriented Programming and dynamically changing runtime semantics(by providing a Metaobject Protocol).
 
 This project serves as an explorational workbench for experimenting and testing idiosyncratic linguistic abstractions and language constructs, design patterns, dsls, runtime semantics etc. 
 
 ##### Influenced directly or indirectly by
-Javascript, Self, Python, Go, Smalltalk, F#, OCaml, Haskell, Scala, Lisp, CLOS, Scheme, Clojure, Lua, C, Wolfram Language
+Javascript, Self, F#, Python, Go, Smalltalk, OCaml, Haskell, Scala, Lisp, CLOS, Scheme, Clojure, Lua, C, Wolfram Language, Racket
 
 #### Example code
 ```
@@ -42,6 +42,7 @@ for i in 0..20 {
 ```
 
 ## Currently supports
+> The codebase is under heavy developement and constantly updated
 * Control Flow
     * if-elif-else
     * for loop
@@ -62,10 +63,10 @@ for i in 0..20 {
     * Optional chaining
     * Method invocation
     * Basic operator overloading
+    * Prototypal Inheritance
 * Concurrency
-    * `go` syntax supported (internally uses a custom thread pool)
-    * `go` returns an Async Future/Promise which is fulfilled with the return value of routine which was executed by the thread
-    * Syntactic support using `then`(sugar created over the promise returned) for chaining of continuation/lambda after `go` expression.
+    * `go` syntax supported (currently assigns a thread from a thread pool)
+    * `go` expression returns an Async Future/Promise which is fulfilled with the return value of routine
 * Lazy expressions are supported
 * Embedded S-Expression support
     * Allowed to pass around as literals
@@ -76,7 +77,7 @@ for i in 0..20 {
 
 ## Under implementation
 > This also includes long term goals
-* Prototypal inheritance (single & multiple)
+* Multiple prioritized inheritance & Sender path tie breaker resolution
 * Sum types (Disjoint union types)
 * Module system
 * Python FFI
@@ -88,8 +89,6 @@ for i in 0..20 {
 * Tagged string literals
 * Scala like `_` based lambda literal transformations
 * Haskell style List Comprehensions
-* Lisp style Macros
-* Code quotations
 * RegExp Literals
 * Proxy and AOP
 * Sugar syntax based on AOP for DbC (Design by Contract e.g preconditions, postconditions etc.)
@@ -98,6 +97,8 @@ for i in 0..20 {
 * Dynamically scoped functions/thunks
 * Coroutines, async-await(more specific form of do notation?) and First Class Continuations?
 * Homoiconic transforms
+* Lisp style Macros
+* Code quotations
 * Self hosted transpiler to Javascript (with Javascript FFI)
 * Gradual typing (Based on gradually typed hindley-milner with dynamic type inference: [ref](https://dl.acm.org/doi/10.1145/3290331))
 * Runtime persistance to JSON or Custom image format

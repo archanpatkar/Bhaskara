@@ -72,31 +72,39 @@ print(obj1.x)
 print(obj1.y)
 print(obj1)
 
-pg1 := {
-    balance:0,
-    lt:0,
-    def deposit(v) {
+meta := {
+    deposit: def(v) {
         if v > 0 {
-            this.balance = this.balance + v
-            this.lt = v
+          this.balance = this.balance + v
+          this.lt = v
         }
     },
-    def withdraw(v) {
+    withdraw: def(v) {
         if v <= this.balance {
             this.balance = this.balance - v
             this.lt = -v
         }
     },
-    def statement() {
+    statement: def() {
         this.balance |> print
         this.lt |> print
     }
 }
 
+def piggybank() => { 
+    balance:0, 
+    lt:0, 
+    __proto__:meta 
+}
+
+print("testing prototypal")
+print("----------------------------")
+pg1 := piggybank()
 print(pg1)
 pg1.deposit(10)
 pg1.withdraw(3)
 pg1.statement()
+print("----------------------------")
 
 print(obj1?.f1(10,20,30))
 

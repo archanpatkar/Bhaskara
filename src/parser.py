@@ -8,7 +8,7 @@ from error import parse_error
     # 1. (Create a language level standard for handling \n like Go or Swift etc.) 
     # 2. (Or implement Automatic semicolon insertion like Javascript or Kotlin) 
         # Good docs and resources -
-            # https://tc39.es/ecma262/#sec-automatic-semicolon-insertion
+            #  https://tc39.es/ecma262/#sec-automatic-semicolon-insertion
             # https://temperlang.dev/design-sketches/parsing-program-structure.html#asi    
     # 3. (To write an algorithm based on hueristics and language constructs to best improve DX)
 # !! Add more error checks

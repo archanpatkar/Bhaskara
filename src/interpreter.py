@@ -2,6 +2,7 @@ import math
 # from env import *
 import sys
 from runtime.pool import Pool
+from runtime.object import Object
 # from parser import Parser
 # from lexer import Tokenizer
 
@@ -171,8 +172,8 @@ def eval(ast,env=ROOT):
         elif ast["type"] == "Apply":
             obj = None
             func = eval(ast["iden"],env)
-            print(ast["iden"])
-            print(func)
+            # print(ast["iden"])
+            # print(func)
             if (not callable(func)) and (not isinstance(func,dict) and func.get(overload_sig["CALL"]) == None):
                 # print(dir(func))
                 # print(func.keys())
@@ -180,7 +181,7 @@ def eval(ast,env=ROOT):
                 print("Function required")
                 return
                 # sys.exit(0)
-            if isinstance(func,dict) and func.get(overload_sig["CALL"]) != None:
+            if isinstance(func,Object) and func.get(overload_sig["CALL"]) != None:
                 obj = func
                 # print(func)
                 func = func.get(overload_sig["CALL"])
@@ -207,7 +208,7 @@ def eval(ast,env=ROOT):
             # print("lalalal")
             # print(ast["iden"])
             # print(func)
-            print(ast)
+            # print(ast)
             r = func(*params)
             # print(params)
             if isinstance(r,BFunction) and params[0].name:
@@ -251,18 +252,18 @@ def eval(ast,env=ROOT):
                 elif isinstance(name,dict) and (name.get("op") == "DOT" or name.get("op") == "OPDOT"):
                     obj = eval(name["left"],env)
                     index = name["right"]["value"]
-                    print("this is here!")
-                    print(obj)
-                    print(index)
+                    # print("this is here!")
+                    # print(obj)
+                    # print(index)
                     val = eval(ast["right"],env)
-                    print(val)
+                    # print(val)
                     obj.update({index: val})
                     return obj[index]
                 else:
                     val = eval(ast["right"],env)
                     return env.updateVar(name["value"],val)
             elif ast["op"] == "DOT":
-                print(ast)
+                # print(ast)
                 obj = eval(ast["left"],env)
                 if ast["right"]["type"] == "Apply":
                     func = obj[ast["right"]["iden"]["value"]]
@@ -273,9 +274,9 @@ def eval(ast,env=ROOT):
                     return func(*params,this=obj)
                 else:
                     index = ast["right"]["value"]
-                    print("Accessing!")
-                    print(obj)
-                    print(index)
+                    # print("Accessing!")
+                    # print(obj)
+                    # print(index)
                     return obj[index]
             elif ast["op"] == "OPDOT":
                 obj = eval(ast["left"],env)
@@ -301,7 +302,7 @@ def eval(ast,env=ROOT):
                 # print(ast["right"])
                 left = eval(ast["left"],env)
                 right = eval(ast["right"],env)
-                if isinstance(left,dict) and ast["op"] != "LPIPE" and ast["op"] != "RPIPE":
+                if isinstance(left,Object) and ast["op"] != "LPIPE" and ast["op"] != "RPIPE":
                     f = left[overload_sig[ast["op"]]]
                     if not callable(f):
                         print("Function required")
@@ -349,7 +350,7 @@ def eval(ast,env=ROOT):
         #     l = [eval(e,env) for e in ast["con"]]
         #     return l
         elif ast["type"] == "Obj":
-            obj = {}
+            obj = Object()
             for e in ast["kv"]:
                 if isinstance(e[0],str) or e[0]["type"] == "Atom":
                     key = None

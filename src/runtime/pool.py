@@ -10,7 +10,7 @@ class TSQueue:
     def enqueue(self,msg):
         with self.monitor:
             self.q.append(msg)
-            self.monitor.notify(1)
+            self.monitor.notify()
 
     def dequeue(self):
         with self.monitor:

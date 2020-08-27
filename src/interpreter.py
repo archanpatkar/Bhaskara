@@ -3,8 +3,12 @@ import math
 import sys
 from runtime.pool import Pool
 from runtime.object import Object
+from runtime.channel import Channel
 # from parser import Parser
 # from lexer import Tokenizer
+
+# Currently many aspects of the interpreter are metacircular in nature
+# will shift to a completely independent implementation.
 
 # Refactor to CPS style
 # !! Improvements needed
@@ -82,7 +86,8 @@ def std_env():
     env.update({
         "print":print,
         "len":len,
-        "range":range
+        "range":range,
+        "channel": Channel
     })
     return env
 
@@ -187,7 +192,6 @@ def eval(ast,env=ROOT):
                 func = func.get(overload_sig["CALL"])
             # print(ast["actual"])
             params = [eval(e,env) for e in ast["actual"] if e != None]
-            # print(params)
             # print("lalalal")
             # print(ast["iden"])
             # r = None
@@ -271,6 +275,9 @@ def eval(ast,env=ROOT):
                         print("Function required")
                         sys.exit(0)
                     params = [eval(e,env) for e in ast["right"]["actual"] if e != None]
+                    print("here---->method execution")
+                    print(params)
+                    print(obj)
                     return func(*params,this=obj)
                 else:
                     index = ast["right"]["value"]

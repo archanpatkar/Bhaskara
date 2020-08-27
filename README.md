@@ -26,7 +26,7 @@ def fib(n) => match n with
 
 8 |> fib |> print
 
-def cons(car, cdr) => [car, cdr]
+def cons(head, tail) => [head, tail]
 def car(l) => force l[0]
 def cdr(l) => force l[1]
 
@@ -43,10 +43,17 @@ for i in 0..20 {
     print <| car(n)
     n = cdr(n)
 }
+
+def reader(ch) => while true do ch.recv() |> print
+def writer(ch,n) => for i in 0..n do ch.send(i)
+
+ch1 := channel()
+go reader(ch1)
+writer(ch1,100)
 ```
 
 ## Currently supports
-> The codebase is under heavy developement and constantly updated
+> The codebase is under heavy developement(in a primitive quality state) and constantly updated
 * Control Flow
     * if-elif-else
     * for loop
@@ -71,13 +78,11 @@ for i in 0..20 {
 * Concurrency
     * `go` syntax supported (currently assigns a thread from a thread pool)
     * `go` expression returns an Async Future/Promise which is fulfilled with the return value of routine
+    * `channel` currently supported through objects(will give syntactic support through operator overloading in the future)
 * Lazy expressions are supported
 * Embedded S-Expression support
     * Allowed to pass around as literals
     * Working on allowing templatization
-* String templates
-    * Currently working on templatization
-    * Next will be allowing tagging template literals
 
 ## Under implementation
 > This also includes long term goals
@@ -87,10 +92,9 @@ for i in 0..20 {
 * Python FFI
 * Tail call optimization
 * In built testing
-* Channels
 * Destructuring
 * Optimized Goroutine scheduler
-* Tagged string literals
+* String templates and Tagged string literals
 * Scala like `_` based lambda literal transformations
 * Haskell style List Comprehensions
 * RegExp Literals

@@ -67,7 +67,7 @@ class Tokenizer:
         self.ignoreNL = v
 
     def hasNext(self):
-        if len(self.tokens) == 0 and self.current < self.len: self.tokenize()
+        if len(self.tokens) == 0: self.tokenize()
         return len(self.tokens) > 0
 
     def peek(self):
@@ -240,7 +240,7 @@ class Tokenizer:
                 lexing_error(topo_loc(self.lines[self.lineno],self.lineno,self.colno,"Unexpected character -> {}".format(token.val)))
             self.current += 1
             self.colno += 1
-        if len(self.tokens) == 0 and self.current == self.len:
+        if len(self.tokens) == 0:
             self.makeTok("EOF", "\0")
 # t = Tokenizer("5   +  archan")
 # print(t)

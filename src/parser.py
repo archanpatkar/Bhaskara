@@ -2,7 +2,7 @@ from pprint import pprint
 from ast import *
 from tokens import *
 from lexer import Tokenizer
-from error import parse_error
+from error import parse_error, topo_loc
 
 # !! Improve \n handling, currently it is very simplistic 
     # 1. (Create a language level standard for handling \n like Go or Swift etc.) 
@@ -55,10 +55,13 @@ class Parser:
         taken = self.tokenizer.consume()
         if taken.type != token:
             if msg:
-                parse_error("{} not {}".format(msg,taken.val))
+                parse_error(topo_loc(self.tokenizer.lines[taken.line-1],taken.line,taken.col,"{} not {}".format(msg,taken.val)))
             else:
-                parse_error("Expected token {} not {}".format(token,taken.val))
+                parse_error(topo_loc(self.tokenizer.lines[taken.line-1],taken.line,taken.col,"Expected token {} not {}".format(token,taken.val)))
         return taken
+
+    def error(self,token,msg):
+        parse_error(topo_loc(self.tokenizer.lines[token.line-1],token.line,token.col,msg))
 
     def eatWhitespace(self):
         while self.tokenizer.peek().type == "LINEEND": 
@@ -143,7 +146,7 @@ class Parser:
                     checker.append(Atom(n.val))
                     break
             else:
-                parse_error("Unknown pattern {}".format(n.val))
+                self.error(n,"Unknown pattern {}".format(n.val))
             n = self.tokenizer.peek()
             if n.type == "OR":
                 self.tokenizer.consume()
@@ -233,7 +236,7 @@ class Parser:
                 self.tokenizer.consume()
                 current = self.tokenizer.peek()
             else:
-                parse_error("Expected identifier not {}".format(current.val))
+                self.error(current,"Expected identifier not {}".format(current.val))
         self.expect("RPAREN", "expected `)`")
         body = None
         current = self.tokenizer.peek()
@@ -245,7 +248,7 @@ class Parser:
                 self.tokenizer.consume()
             body = self.exp(0)
         else:
-            parse_error("Expected `=` or block")
+            self.error(current,"Expected `=` or block")
         return Func(name, params, body)
 
     def parseCurl(self):
@@ -264,7 +267,7 @@ class Parser:
                 self.tokenizer.consume()
                 objLit = True
                 if len(block) > 0:
-                    parse_error("Cannot mix normal code with an object literal")
+                    self.error(t,"Cannot mix normal code with an object literal")
                 value = self.exp(0)
                 current = self.tokenizer.peek()
                 if current.type != "RCURL" and current.val != "\n":
@@ -272,11 +275,11 @@ class Parser:
                 elif current.val == "\n":
                     self.tokenizer.consume()
                 else:
-                    parse_error("Unexpected token `{}`".format(current.val))
+                    self.error(current,"Unexpected token `{}`".format(current.val))
                 lit.append((t, value))
             elif objLit and isinstance(t, dict) and t["type"] == "Func":
                 if t["name"] == None:
-                    parse_error("Function name required in object literal")
+                    self.error(t,"Function name required in object literal")
                 name = t["name"]
                 current = self.tokenizer.peek()
                 if current.type != "RCURL" and current.val != "\n":
@@ -284,7 +287,7 @@ class Parser:
                 elif current.val == "\n":
                     self.tokenizer.consume()
                 else:
-                    parse_error("Unexpected token `{}`".format(current.val))
+                    self.error(current,"Unexpected token `{}`".format(current.val))
                 lit.append((name, t))
             else:
                 block.append(t)
@@ -297,6 +300,7 @@ class Parser:
     def parseList(self):
         self.tokenizer.consume()
         l = []
+        comp = False
         current = self.tokenizer.peek()
         while current.type != "RSQB":
             l.append(self.exp(0))
@@ -304,6 +308,10 @@ class Parser:
             if current.type == "SEP":
                 self.tokenizer.consume()
                 current = self.tokenizer.peek()
+            elif current.type == "OR" and not(comp):
+                self.tokenizer.consume()
+                comp = True
+
         self.expect("RSQB", "Expected `[`")
         return List(l)
 
@@ -318,12 +326,12 @@ class Parser:
         return Force(exp)
 
     def parseGo(self):
-        self.tokenizer.consume()
+        tok = self.tokenizer.consume()
         ap = self.exp(0)
         chain = None
 	
         if not (ap["type"] == "Apply" or ap["op"] == "DOT" or ap["op"] == "OPDOT"):
-            parse_error("Expected a function or method application")
+            self.error(tok,"Expected a function or method application")
         if self.tokenizer.peek().type == "THEN":
             self.tokenizer.consume()
             chain = self.exp(0)
@@ -335,7 +343,7 @@ class Parser:
         while t.type != "RPAREN":
             if t.type == "SEP":
                 if len(params) == 0:
-                    parse_error("Expected `)`")
+                    self.error(t,"Expected `)`")
                 self.tokenizer.consume()
             else:
                 e = self.exp(0)
@@ -376,6 +384,7 @@ class Parser:
 
     # Make this hashed(dict) based and dynamic according to the token type
     # For both the term(prefix), exp(infix) also add support for postfix in exp
+    # Will load on the fly from the parser.json file
     def term(self):
         current = self.tokenizer.peek()
         if current.type == "EOF" or current.type == "LINEEND":
@@ -413,7 +422,7 @@ class Parser:
         elif current.type == "NUM" or current.type == "BOOL" or current.type == "STR":
             return Literal(self.tokenizer.consume().val)
         else:
-            parse_error("Unexpected token `{}`".format(current.val))
+            self.error(current,"Unexpected token `{}`".format(current.val))
 
     def exp(self, min):
         lhs = self.term()

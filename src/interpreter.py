@@ -195,10 +195,9 @@ def eval(ast,env=ROOT):
             # print("lalalal")
             # print(ast["iden"])
             # r = None
-            if obj: 
+            if obj and not(obj.native): 
                 return func(*params,this=obj)
-            else: 
-                return func(*params)
+            return func(*params)
             # print(r)
             # return r
         elif ast["type"] == "DecApply":
@@ -278,6 +277,8 @@ def eval(ast,env=ROOT):
                     print("here---->method execution")
                     print(params)
                     print(obj)
+                    if obj.native:
+                        return func(*params)
                     return func(*params,this=obj)
                 else:
                     index = ast["right"]["value"]

@@ -1,7 +1,8 @@
 from pprint import pprint
 from tokens import *
-from error import lexing_error
+from error import lexing_error, topo_loc
 
+# TODO: Optimize and the clean up the code
 # Store column number and line number in the token
 # store lines sep. for good error messages for both the parser and the lexer
 # Something like -
@@ -16,7 +17,6 @@ from error import lexing_error
 # potentially endless possibilities for creating DSLs(without using the tokenization of 
 # the language itself).
 
-# Capture col and line number as well in the tokens
 def isWhite(str):
     if str in white:
         return True
@@ -38,13 +38,13 @@ def isKeyword(str):
         return True
     return False
 
-def createKeyword(buff):
+def getKeyword(buff):
     if buff == "true" or buff == "T":
-        return Token("BOOL", True)
+        return ("BOOL", True)
     elif buff == "false" or buff == "F":
-        return Token("BOOL", False)
+        return ("BOOL", False)
     else:
-        return Token(token_name[buff], buff)
+        return (token_name[buff], buff)
 
 class Tokenizer:
     def __init__(self, code=None):
@@ -57,21 +57,28 @@ class Tokenizer:
         self.tokens = []
         self.str = code
         self.ignoreNL = False
+        self.lineno = 1
+        self.colno = 1
+        # Temp will optimized later
+        self.lines = self.str.split('\n')
         self.len = len(self.str)
 
-    def ignore(self, v):
+    def ignore(self, v=True):
         self.ignoreNL = v
 
     def hasNext(self):
+        if len(self.tokens) == 0 and self.current < self.len: self.tokenize()
         return len(self.tokens) > 0
 
     def peek(self):
+        if len(self.tokens) == 0: self.tokenize()
         if self.ignoreNL:
             while self.hasNext() and self.tokens[0].type == "LINEEND":
                 self.tokens.pop(0)
         return self.tokens[0]
 
     def consume(self):
+        if len(self.tokens) == 0: self.tokenize()
         if self.ignoreNL:
             while self.hasNext() and self.tokens[0].type == "LINEEND":
                 self.tokens.pop(0)
@@ -86,49 +93,57 @@ class Tokenizer:
             if isNumber(c):
                 buff += c
                 self.current += 1
+                self.colno += 1
             elif c == "." and (self.str[self.current+1] != "." or isNumber(self.str[self.current+1])) and not(decimal):
                 decimal = True
                 buff += c
                 self.current += 1
+                self.colno += 1
             else:
                 self.current -= 1
+                self.colno -= 1
                 break
         if decimal:
             buff = float(buff)
         else:
             buff = int(buff)
-        self.tokens.append(Token("NUM", buff))
+        self.makeTok("NUM", buff)
 
     def parseIdentifier(self):
         buff = "" + self.str[self.current]
         self.current += 1
+        self.colno += 1
         while self.current < self.len:
             c = self.str[self.current]
             if isIdentifier(c) or isNumber(c):
                 buff += c
                 self.current += 1
+                self.colno += 1
             else:
                 self.current -= 1
+                self.colno -= 1
                 break
         if isKeyword(buff):
-            self.tokens.append(createKeyword(buff))
+            self.makeTok(*getKeyword(buff))
         else:
-            self.tokens.append(Token("IDEN", buff))
+            self.makeTok("IDEN", buff)
 
     def parseString(self):
         buff = ""
         self.current += 1
+        self.colno += 1
         c = ""
         while self.current < self.len:
             c = self.str[self.current]
             if c != '"' and c != "'":
                 buff += c
                 self.current += 1
+                self.colno += 1
             else:
                 break
         if c != '"' and c != "'":
-            lexing_error('Unmatched string quote')
-        self.tokens.append(Token("STR", buff))
+            lexing_error(topo_loc(self.lines[self.lineno-1],self.lineno,self.colno,'Unmatched string quote'))
+        self.makeTok("STR", buff)
 
     def handleComment(self):
         self.current += 2
@@ -144,6 +159,7 @@ class Tokenizer:
         c = self.str[self.current+1]
         while isWhite(c):
             self.current += 1
+            self.colno += 1
             c = self.str[self.current+1]
 
     def isNext(self, ch):
@@ -158,7 +174,10 @@ class Tokenizer:
         # Parse arbitarily complex n char ops defined from the double dict in the tokes
         pass
 
-    def tokenize(self, code):
+    def makeTok(self,name,ch):
+        return self.tokens.append(Token(name,ch,self.lineno,self.colno))
+
+    def tokenize(self, code=False):
         if code:
             self.setup(code)
         buff = ""
@@ -168,10 +187,19 @@ class Tokenizer:
                 self.eatWhitespace()
             elif c == "/" and self.isNext("/"):
                 self.handleComment()
+                self.lineno += 1
+                self.colno = 1
+                self.current += 1
+                break
             elif c == '"' or c == "'":
                 self.parseString()
+                self.current += 1
+                break
             elif isNumber(c):
                 self.parseNum()
+                self.current += 1
+                self.colno += 1
+                break
             elif c in ops:
                 done = False
                 if c in double:
@@ -181,20 +209,47 @@ class Tokenizer:
                                 done = True
                                 self.current += 1
                                 n = c+self.str[self.current]
-                                self.tokens.append(Token(token_name[n], n))
+                                self.colno += 2
+                                self.makeTok(token_name[n], n)
+                                self.current += 1
                                 break
                     elif self.isNext(double[c]):
                         done = True
                         self.current += 1
                         n = c+self.str[self.current]
-                        self.tokens.append(Token(token_name[n], n))
+                        self.colno += 2
+                        self.makeTok(token_name[n], n)
+                        self.current += 1
                 if not done:
-                    self.tokens.append(Token(token_name[c], c))
+                    self.makeTok(token_name[c], c)
+                    self.current += 1
+                    self.colno += 1
+                break
             elif isIdentifier(c):
                 self.parseIdentifier()
+                self.current += 1
+                self.colno += 1
+                break
             elif c in lineend:
-                self.tokens.append(Token("LINEEND", c))
+                self.makeTok("LINEEND", c)
+                self.current += 1
+                self.lineno += 1
+                self.colno = 1
+                break
             else:
-                lexing_error(c)
+                lexing_error(topo_loc(self.lines[self.lineno],self.lineno,self.colno,"Unexpected character -> {}".format(token.val)))
             self.current += 1
-        self.tokens.append(Token("EOF", "\0"))
+            self.colno += 1
+        if len(self.tokens) == 0 and self.current == self.len:
+            self.makeTok("EOF", "\0")
+# t = Tokenizer("5   +  archan")
+# print(t)
+# print(t.hasNext())
+# print(t.consume())
+# printTopoLoc(t.consume(),t.lines)
+# print(t.hasNext())
+# print(t.consume())
+# printTopoLoc(t.consume(),t.lines)
+# print(t.hasNext())
+# print(t.consume())
+# printTopoLoc(t.consume(),t.lines)

@@ -9,8 +9,9 @@ ops = [
 keywords = [
                 "T","F","N","B","true","false","neither","both","if","then",
                 "else","def","unit","do","while","for","in","match","quote",
-                "macro", "unquote", "lazy","force","assert","go","break","continue","type",
-                "do","elif","panic","when","type","with","to","yield","dyn"
+                "macro", "unquote", "lazy","force","assert","go","break","continue",
+                "type","do","elif","panic","when","type","with","to","yield","dyn",
+                "is","class"
         ]
 white = [" ","\r","\t"]
 digits = ["0","1","2","3","4","5","6","7","8","9"]
@@ -59,6 +60,7 @@ token_name = {
     "elif":"ELSEIF",
     "def":"DEF",
     "when":"WHEN",
+    "is":"IS",
     "while":"WHILE",
     "for":"FOR",
     "in":"IN",
@@ -101,7 +103,7 @@ binaryops = [
                 "ADD","SUBS","DIV","MUL","EXP","OR","AND",
                 "LT","GT","EQ","IMP","NOTEQ","LTEQ","GTEQ",
                 "VAR","ASGN","LPIPE","RPIPE","DOT","OPDOT",
-                "NULLISH","LPAREN","LSQB","MOD","RANGE"
+                "NULLISH","LPAREN","LSQB","MOD","RANGE","IS"
             ]
 unaryops = ["SUBS","ADD","NOT","ASSERT","PANIC"]
-Token = namedtuple("Token",["type","val"])
+Token = namedtuple("Token",["type","val","line","col"])

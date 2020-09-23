@@ -4,9 +4,3 @@ def writer(ch,n) => for i in 0..n do ch.send(i)
 ch1 := channel()
 go reader(ch1)
 writer(ch1,100)
-
-//print <| #(
-//    (square 10 20) 
-//    (move 10) 
-//    (circle 30)
-//)

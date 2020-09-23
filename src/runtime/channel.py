@@ -28,14 +28,13 @@ class Channel(Object):
         super().__init__(native=True)
         self.buff = TSQueue()
 
-    # This is intentional due to the current execution style of interpreter 
-    def send(self,msg,this):
-        print("-------channel--------")
-        print(msg)
-        print(self)
+    def send(self,msg):
+        # print("-------channel--------")
+        # print(msg)
+        # print(self)
         self.buff.enqueue(msg)
 
-    def recv(self,this):
+    def recv(self):
         # print("-------channel--------")
         # print(temp)
         # print(this)

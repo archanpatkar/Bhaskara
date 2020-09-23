@@ -95,8 +95,9 @@ writer(ch1,100)
 * Destructuring
 * Optimized Goroutine scheduler
 * String templates and Tagged string literals
-* Scala like `_` based lambda literal transformations
+* Scala like `_` based lambda literal sugar
 * Haskell style List Comprehensions
+* Typeclasses
 * RegExp Literals
 * Proxy and AOP
 * Sugar syntax based on AOP for DbC (Design by Contract e.g preconditions, postconditions etc.)
@@ -107,7 +108,7 @@ writer(ch1,100)
 * Homoiconic transforms
 * Lisp style Macros
 * Code quotations
-* Self hosted transpiler to Javascript (with Javascript FFI)
+* Self hosted transpiler to Javascript
 * Gradual typing (Based on gradually typed hindley-milner with dynamic type inference: [ref](https://dl.acm.org/doi/10.1145/3290331))
 * Runtime persistance to JSON or Custom image format
 * Unicode support

@@ -55,7 +55,7 @@ class Parser:
         taken = self.tokenizer.consume()
         if taken.type != token:
             if msg:
-                parse_error(topo_loc(self.tokenizer.lines[taken.line-1],taken.line,taken.col,"{} not {}".format(msg,taken.val)))
+                parse_error(topo_loc(self.tokenizer.lines[taken.line-1],taken.line,taken.col,"{}".format(msg)))
             else:
                 parse_error(topo_loc(self.tokenizer.lines[taken.line-1],taken.line,taken.col,"Expected token {} not {}".format(token,taken.val)))
         return taken
@@ -64,20 +64,23 @@ class Parser:
         parse_error(topo_loc(self.tokenizer.lines[token.line-1],token.line,token.col,msg))
 
     def eatWhitespace(self):
-        while self.tokenizer.peek().type == "LINEEND": 
+        while self.tokenizer.hasNext() and self.tokenizer.peek().type == "LINEEND": 
             self.tokenizer.consume()
 
     def afterWhitespace(self):
         current = 0
-        while self.tokenizer.tokens[current].type == "LINEEND": 
+        while self.tokenizer.hasNext() and self.tokenizer.tokens[current].type == "LINEEND": 
             current += 1
+            self.tokenizer.genNext()
         return self.tokenizer.tokens[current]
 
     def parse(self, code):
         self.tokenizer.tokenize(code)
         exps = []
         while self.tokenizer.hasNext() and self.tokenizer.peek().type != "EOF":
+            print(self.tokenizer.tokens)
             out = self.exp(0)
+            print(out)
             if out: exps.append(out)
             end = self.tokenizer.peek()
             if end and end.type != "EOF":
@@ -340,7 +343,7 @@ class Parser:
     def parseApp(self,lhs):
         params = []
         t = self.tokenizer.peek()
-        while t.type != "RPAREN":
+        while t.type != "RPAREN" and t.type != "LINEEND" and t.type != "EOF":
             if t.type == "SEP":
                 if len(params) == 0:
                     self.error(t,"Expected `)`")
@@ -427,6 +430,7 @@ class Parser:
     def exp(self, min):
         lhs = self.term()
         lookahead = self.tokenizer.peek()
+        print(self.tokenizer.tokens)
         while lhs != None and (lookahead.type in binaryops) and (prectable[lookahead.type][0] >= min):
             op = self.tokenizer.consume()
             n = prectable[op.type][0]
@@ -437,7 +441,9 @@ class Parser:
             elif op.type == "LSQB":
                 lhs = self.parseAcc(lhs)
             else:
-                lhs = BinOp(op.type, lhs, self.exp(n))
+                snd = self.exp(n)
+                if snd: lhs = BinOp(op.type, lhs, snd)
+                else: self.error(self.tokenizer.peek(),"Unexpected end")
             lookahead = self.tokenizer.peek()
 	# Add logic for auto application of functions to increase the dsl features 
 	# Allowing something like repeat 5 { print <| "repeating this!" } 

@@ -9,6 +9,7 @@ class Object:
 
     def update(self,d):
         self.props.update(d)
+        return self
 
     def get(self,key):
         return self[key]

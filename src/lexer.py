@@ -2,7 +2,7 @@ from pprint import pprint
 from tokens import *
 from error import lexing_error, topo_loc
 
-# TODO: Optimize and the clean up the code
+# TODO: Optimize and clean up the code
 # Store column number and line number in the token
 # store lines sep. for good error messages for both the parser and the lexer
 # Something like -
@@ -69,6 +69,9 @@ class Tokenizer:
     def hasNext(self):
         if len(self.tokens) == 0: self.tokenize()
         return len(self.tokens) > 0
+
+    def genNext(self):
+        self.tokenize()
 
     def peek(self):
         if len(self.tokens) == 0: self.tokenize()
@@ -139,6 +142,9 @@ class Tokenizer:
                 buff += c
                 self.current += 1
                 self.colno += 1
+                if c in lineend:
+                    self.lineno += 1
+                    self.colno = 1
             else:
                 break
         if c != '"' and c != "'":
@@ -158,8 +164,8 @@ class Tokenizer:
     def eatWhitespace(self):
         c = self.str[self.current+1]
         while isWhite(c):
-            self.current += 1
             self.colno += 1
+            self.current += 1
             c = self.str[self.current+1]
 
     def isNext(self, ch):
@@ -187,13 +193,13 @@ class Tokenizer:
                 self.eatWhitespace()
             elif c == "/" and self.isNext("/"):
                 self.handleComment()
+                print("handling comments")
                 self.lineno += 1
                 self.colno = 1
-                self.current += 1
-                break
             elif c == '"' or c == "'":
                 self.parseString()
                 self.current += 1
+                self.colno += 1
                 break
             elif isNumber(c):
                 self.parseNum()
@@ -223,7 +229,7 @@ class Tokenizer:
                 if not done:
                     self.makeTok(token_name[c], c)
                     self.current += 1
-                    self.colno += 1
+                    self.colno += 2
                 break
             elif isIdentifier(c):
                 self.parseIdentifier()
@@ -240,8 +246,10 @@ class Tokenizer:
                 lexing_error(topo_loc(self.lines[self.lineno],self.lineno,self.colno,"Unexpected character -> {}".format(token.val)))
             self.current += 1
             self.colno += 1
-        if len(self.tokens) == 0:
+        if len(self.tokens) == 0 and self.len == self.current:
             self.makeTok("EOF", "\0")
+        # else:
+        #     self.tokens.append(None)
 # t = Tokenizer("5   +  archan")
 # print(t)
 # print(t.hasNext())

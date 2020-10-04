@@ -3,6 +3,7 @@ from ast import *
 from tokens import *
 from lexer import Tokenizer
 from error import parse_error, topo_loc
+from runtime.object import Object
 
 # !! Improve \n handling, currently it is very simplistic 
     # 1. (Create a language level standard for handling \n like Go or Swift etc.) 
@@ -78,9 +79,9 @@ class Parser:
         self.tokenizer.tokenize(code)
         exps = []
         while self.tokenizer.hasNext() and self.tokenizer.peek().type != "EOF":
-            print(self.tokenizer.tokens)
+            # print(self.tokenizer.tokens)
             out = self.exp(0)
-            print(out)
+            # print(out)
             if out: exps.append(out)
             end = self.tokenizer.peek()
             if end and end.type != "EOF":
@@ -280,7 +281,7 @@ class Parser:
                 else:
                     self.error(current,"Unexpected token `{}`".format(current.val))
                 lit.append((t, value))
-            elif objLit and isinstance(t, dict) and t["type"] == "Func":
+            elif objLit and (isinstance(t, Object) or isinstance(t, dict)) and t["type"] == "Func":
                 if t["name"] == None:
                     self.error(t,"Function name required in object literal")
                 name = t["name"]
@@ -430,7 +431,7 @@ class Parser:
     def exp(self, min):
         lhs = self.term()
         lookahead = self.tokenizer.peek()
-        print(self.tokenizer.tokens)
+        # print(self.tokenizer.tokens)
         while lhs != None and (lookahead.type in binaryops) and (prectable[lookahead.type][0] >= min):
             op = self.tokenizer.consume()
             n = prectable[op.type][0]

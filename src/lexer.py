@@ -193,7 +193,7 @@ class Tokenizer:
                 self.eatWhitespace()
             elif c == "/" and self.isNext("/"):
                 self.handleComment()
-                print("handling comments")
+                # print("handling comments")
                 self.lineno += 1
                 self.colno = 1
             elif c == '"' or c == "'":

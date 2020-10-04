@@ -140,7 +140,7 @@ def eval(ast,env=ROOT):
         for exp in ast:
             outcome.append(eval(exp,env))
         return outcome
-    elif isinstance(ast,dict):
+    elif isinstance(ast,dict) or isinstance(ast,Object):
         if ast["type"] == "Lit":
             return ast["val"]
         if ast["type"] == "SExpr":
@@ -179,7 +179,7 @@ def eval(ast,env=ROOT):
             func = eval(ast["iden"],env)
             # print(ast["iden"])
             # print(func)
-            if (not callable(func)) and (not isinstance(func,dict) and func.get(overload_sig["CALL"]) == None):
+            if (not callable(func)) and (not (isinstance(func,dict) or isinstance(func,Object)) and func.get(overload_sig["CALL"]) == None) :
                 # print(dir(func))
                 # print(func.keys())
                 # print(func[overload_sig["CALL"]])
@@ -243,7 +243,7 @@ def eval(ast,env=ROOT):
                 return val
             elif ast["op"] == "ASGN":
                 name = ast["left"]
-                if isinstance(name,dict) and name["type"] == "SAcc":
+                if (isinstance(name,dict) or isinstance(name,Object)) and name["type"] == "SAcc":
                     obj = eval(name["iden"],env)
                     index = eval(name["index"],env)
                     val = eval(ast["right"],env)
@@ -252,7 +252,7 @@ def eval(ast,env=ROOT):
                     else:
                         obj.update({index: val})
                     return obj[index]
-                elif isinstance(name,dict) and (name.get("op") == "DOT" or name.get("op") == "OPDOT"):
+                elif (isinstance(name,dict) or isinstance(name,Object)) and (name.get("op") == "DOT" or name.get("op") == "OPDOT"):
                     obj = eval(name["left"],env)
                     index = name["right"]["value"]
                     # print("this is here!")

@@ -89,7 +89,6 @@ writer(ch1,100)
 * Multiple prioritized inheritance & Sender path tie breaker resolution
 * Sum types (Disjoint union types)
 * Module system
-* Python FFI
 * Tail call optimization
 * In built testing
 * Destructuring
@@ -97,18 +96,15 @@ writer(ch1,100)
 * String templates and Tagged string literals
 * Scala like `_` based lambda literal sugar
 * Haskell style List Comprehensions
-* Typeclasses
 * RegExp Literals
-* Proxy and AOP
-* Sugar syntax based on AOP for DbC (Design by Contract e.g preconditions, postconditions etc.)
+* Proxy and AOP (Sugar syntax based on AOP for DbC - Design by Contract e.g preconditions, postconditions etc.)
 * Monadic bind operator and Do notation
-* Additonal call by name eval strategy for thunks
-* Dynamically scoped functions/thunks
+* Dynamically scoped functions/thunks and call by name eval strategy for thunks
 * Coroutines, async-await(more specific form of do notation?) and First Class Continuations?
 * Homoiconic transforms
 * Lisp style Macros
 * Code quotations
 * Self hosted transpiler to Javascript
-* Gradual typing (Based on gradually typed hindley-milner with dynamic type inference: [ref](https://dl.acm.org/doi/10.1145/3290331))
+* Gradual typing
 * Runtime persistance to JSON or Custom image format
 * Unicode support

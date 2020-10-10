@@ -20,8 +20,7 @@ pfac <- fac >> print
 for i in 1..13 do go pfac(i)
 
 def fib(n) => match n with
-                  | 0 => 0
-                  | 1 => 1
+                  | 0 => 1
                   | _ => fib(n-1) + fib(n-2)
 
 8 |> fib |> print
@@ -90,8 +89,6 @@ writer(ch1,100)
 * Sum types (Disjoint union types)
 * Module system
 * Tail call optimization
-* In built testing
-* Destructuring
 * Optimized Goroutine scheduler
 * String templates and Tagged string literals
 * Scala like `_` based lambda literal sugar

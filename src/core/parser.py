@@ -13,7 +13,7 @@ from runtime.object import Object
             # https://temperlang.dev/design-sketches/parsing-program-structure.html#asi    
     # 3. (To write an algorithm based on hueristics and language constructs to best improve DX)
 # !! Add more error checks
-# !! Handle unexpected ends
+# !! Handle some unexpected ends
 # !! Handle parsing edge cases
 
 # Parser uses Precedence Climbing/Pratt parser Algorithm

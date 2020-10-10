@@ -21,7 +21,6 @@ class Object:
         if key in self.props:
             return self.props.get(key)
         elif self.props.get("__proto__"):
-            print(self.props.get("__proto__"))
             return self.props.get("__proto__")[key]
         elif self.native:
             return self.__getattribute__(key)

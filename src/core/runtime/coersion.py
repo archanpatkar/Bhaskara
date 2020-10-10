@@ -1,3 +1,5 @@
+# Add coersion rules for primitives
+
 # bool_ops = ["NOT","AND","OR",""]
 # num_ops = ["ADD","SUBS","DIV","MUL","EXP","NEG","POS"]
 # def coerse(op,*params):

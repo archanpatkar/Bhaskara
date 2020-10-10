@@ -4,6 +4,8 @@ import sys
 from runtime.pool import Pool
 from runtime.object import Object
 from runtime.channel import Channel
+from runtime.ops import biopmap, unopmap
+from protocol import overload_sig
 # from parser import Parser
 # from lexer import Tokenizer
 
@@ -15,69 +17,11 @@ from runtime.channel import Channel
 # Code smell very bad 
 # No concretely defined abstractions 
 # Ad-hoc evaluation
-biopmap = {
-    "ADD": lambda x,y: x + y,
-    "SUBS": lambda x,y: x - y,
-    "MUL": lambda x,y: x * y,
-    "MOD": lambda x,y: x % y,
-    "DIV": lambda x,y: x / y,
-    "AND": lambda x,y: x and y,
-    "OR": lambda x,y: x or y,
-    "LT": lambda x,y: x < y,
-    "GT": lambda x,y: x > y,
-    "EQ": lambda x,y: x == y,
-    "GTEQ":lambda x,y: x >= y,
-    "LTEQ":lambda x,y: x <= y,
-    "NOTEQ": lambda x,y: x != y,
-    "IMP": lambda x,y: not(x) or y,
-    "EXP": math.pow,
-    "LPIPE": lambda x,y: y(x),
-    "RPIPE": lambda x,y: x(y),
-    "RANGE": lambda x,y: list(range(x,y))
-}
 
-overload_sig = {
-    "ADD":"__add__",
-    "SUBS":"__sub__",
-    "MUL":"__mul__",
-    "DIV":"__div__",
-    "LT":"__lt__",
-    "GT":"__gt__",
-    "AND":"__and__",
-    "OR":"__or__",
-    "EQ":"__eq__",
-    "SHIFT":"__compose__",
-    "CALL":"__call__"
-}
-
-unopmap = {
-    "SUBS": lambda x: -x,
-    "ADD": lambda x: +x,
-    "NOT": lambda x: not(x)
-}
-
-
-class Env(dict):
-    def __init__(self , params = () , args = () , outer = None):
-        self.update(zip(params,args))
-        self.outer = outer
-    
-    def find(self,var):
-        if var in self:
-            return self[var]
-        elif self.outer != None:
-            return self.outer.find(var)
-        return None
-    
-    def updateVar(self,var,value):
-        if var in self:
-            self[var] = value
-            return value
-        elif self.outer != None:
-            return self.outer.updateVar(var,value)
-        else:
-            print("Error: Cannot update non-existant variable -->",var)
-            # sys.exit(1)
+class Env(object):
+    def __init__(self, outer = None):
+        super().__init__()
+        self["__proto__"] = outer
 
 
 def std_env():
@@ -94,7 +38,7 @@ def std_env():
 ROOT = std_env()
 GLOBAL_POOL = Pool(daemon=False)
 
-class BFunction(dict):
+class BFunction(object):
     def __init__(self, params,body,name,env):
         self.lexical_scope = env
         self.param_name = params
@@ -118,7 +62,7 @@ class BFunction(dict):
             frame.update({self.param_name[var]:actual[var]})
         return eval(self.body,frame)
 
-class Thunk(dict):
+class Thunk(object):
     def __init__(self,exp,env):
         self.exp = exp
         self.env = env
@@ -132,9 +76,20 @@ class Thunk(dict):
             self.exp = eval(self.exp,self.env)
         return self.exp
 
+# class Interpreter(object):
+#     def __init__(self):
+#         pass
+
+def evalLoop(ast,env,cont):
+    pass
+
+def handleException(ast,env,cont):
+    pass
+
+def evalAsync(ast,env,cont):
+    pass
+
 def eval(ast,env=ROOT):
-    # print("-----------------Eval-----------------")
-    # pprint(ast,indent=4)
     if isinstance(ast,list):
         outcome = []
         for exp in ast:
@@ -158,7 +113,6 @@ def eval(ast,env=ROOT):
                 temp = eval(exp,env)
                 if temp != '\n':
                     outcome.append(temp)
-            # print(outcome)
             return outcome[-1]
         elif ast["type"] == "Func":
             f = BFunction(ast["params"],ast["body"],ast["name"],env)
@@ -177,60 +131,33 @@ def eval(ast,env=ROOT):
         elif ast["type"] == "Apply":
             obj = None
             func = eval(ast["iden"],env)
-            # print(ast["iden"])
-            # print(func)
             if (not callable(func)) and (not (isinstance(func,dict) or isinstance(func,Object)) and func.get(overload_sig["CALL"]) == None) :
-                # print(dir(func))
-                # print(func.keys())
-                # print(func[overload_sig["CALL"]])
                 print("Function required")
                 return
-                # sys.exit(0)
             if isinstance(func,Object) and func.get(overload_sig["CALL"]) != None:
                 obj = func
-                # print(func)
                 func = func.get(overload_sig["CALL"])
-            # print(ast["actual"])
             params = [eval(e,env) for e in ast["actual"] if e != None]
-            # print("lalalal")
-            # print(ast["iden"])
-            # r = None
             if obj and not(obj.native): 
                 return func(*params,this=obj)
             return func(*params)
-            # print(r)
-            # return r
         elif ast["type"] == "DecApply":
             func = eval(ast["iden"],env)
             if not callable(func):
                 print("Function required")
                 sys.exit(0)
-            # print(ast["actual"])
             params = [eval(ast["actual"][0],env)]
-            # print(params)
-            # print("lalalal")
-            # print(ast["iden"])
-            # print(func)
-            # print(ast)
             r = func(*params)
-            # print(params)
             if isinstance(r,BFunction) and params[0].name:
                 r.name = params[0].name
                 env.update({r.name: r})
             return r
         elif ast["type"] == "Go":
-            # print(ast)
             func = eval(ast["ap"]["iden"],env)
             if not callable(func):
                 print("Function required")
                 sys.exit(0)
-            # print(ast["actual"])
             params = [eval(e,env) for e in ast["ap"]["actual"] if e != None]
-            # print(params)
-            # print("lalalal")
-            # print(ast["iden"])
-            # r = 
-            # print("here")
             o = GLOBAL_POOL.execute(func,params)
             if ast["chain"]:
                 o["chain"](eval(ast["chain"]),o)
@@ -255,18 +182,14 @@ def eval(ast,env=ROOT):
                 elif (isinstance(name,dict) or isinstance(name,Object)) and (name.get("op") == "DOT" or name.get("op") == "OPDOT"):
                     obj = eval(name["left"],env)
                     index = name["right"]["value"]
-                    # print("this is here!")
-                    # print(obj)
-                    # print(index)
                     val = eval(ast["right"],env)
-                    # print(val)
                     obj.update({index: val})
                     return obj[index]
                 else:
                     val = eval(ast["right"],env)
-                    return env.updateVar(name["value"],val)
+                    env[name["value"]] = val
+                    return val
             elif ast["op"] == "DOT":
-                # print(ast)
                 obj = eval(ast["left"],env)
                 if ast["right"]["type"] == "Apply":
                     func = obj[ast["right"]["iden"]["value"]]
@@ -274,17 +197,11 @@ def eval(ast,env=ROOT):
                         print("Function required")
                         sys.exit(0)
                     params = [eval(e,env) for e in ast["right"]["actual"] if e != None]
-                    print("here---->method execution")
-                    print(params)
-                    print(obj)
                     if obj.native:
                         return func(*params)
                     return func(*params,this=obj)
                 else:
                     index = ast["right"]["value"]
-                    # print("Accessing!")
-                    # print(obj)
-                    # print(index)
                     return obj[index]
             elif ast["op"] == "OPDOT":
                 obj = eval(ast["left"],env)
@@ -303,11 +220,6 @@ def eval(ast,env=ROOT):
                         return obj[index]
                     return False
             else:
-                # print(ast)
-                # ast["left"] = eval(ast["left"],env)
-                # ast["right"] = eval(ast["right"],env)
-                # print(ast["left"])
-                # print(ast["right"])
                 left = eval(ast["left"],env)
                 right = eval(ast["right"],env)
                 if isinstance(left,Object) and ast["op"] != "LPIPE" and ast["op"] != "RPIPE":
@@ -322,7 +234,6 @@ def eval(ast,env=ROOT):
             if ast["op"] == "PANIC":
                 print(eval(ast["right"],env))
                 sys.exit(1)
-            # ast["right"] = eval(ast["right"],env)
             return unopmap[ast["op"]](eval(ast["right"],env))
         elif ast["type"] == "While":
             cond = eval(ast["cond"],env)
@@ -330,7 +241,6 @@ def eval(ast,env=ROOT):
             while cond:
                 out = eval(ast["body"],env)
                 cond = eval(ast["cond"],env)
-            # print(out)
             return out
         elif ast["type"] == "For":
             t = Env(outer=env)
@@ -340,23 +250,17 @@ def eval(ast,env=ROOT):
                     ast["var"]:val
                 })
                 out = eval(ast["body"],t)
-            # print(out)
             return out
         elif ast["type"] == "Cond":
-            # ast["cond"] = 
             if eval(ast["cond"],env):
                 return eval(ast["b1"],env)
             elif ast["b2"] != None:
                 return eval(ast["b2"],env)
         elif ast["type"] == "Atom":
-            # print(ast["value"])
-            return env.find(ast["value"])
+            return env[ast["value"]]
         elif ast["type"] == "List":
             l = [eval(e,env) for e in ast["con"]]
             return l
-        # elif ast["type"] == "Go":
-        #     l = [eval(e,env) for e in ast["con"]]
-        #     return l
         elif ast["type"] == "Obj":
             obj = Object()
             for e in ast["kv"]:
@@ -372,7 +276,6 @@ def eval(ast,env=ROOT):
                 else:
                     print("Expected identifier or string")
                     sys.exit(1)
-            # l = [obj.update({eval(e,env) for e in ast["kv"]]
             return obj
         elif ast["type"] == "SAcc":
             obj = eval(ast["iden"],env)

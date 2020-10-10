@@ -105,4 +105,4 @@ def Match(obj,cases):
     counter += 1
     return Object().update({ "id": counter, "type":"Match", "obj":obj , "cases":cases})
 
-# Add Pattern Matcher, Sum types etc.
+# Add Sum types etc.

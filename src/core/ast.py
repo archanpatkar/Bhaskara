@@ -25,10 +25,10 @@ def CondOp(cond,b1,b2,other=None):
     counter += 1
     return Object().update({ "id": counter, "type":"Cond", "cond": cond, "b1":b1, "other":other ,"b2":b2 })
 
-def Func(name,params,body):
+def Func(name,params,body,scope):
     global counter
     counter += 1
-    return Object().update({ "id": counter, "type":"Func", "name":name, "params":params, "body":body })
+    return Object().update({ "id": counter, "type":"Func", "name":name, "params":params, "body":body, scope:scope })
 
 def Atom(value):
     global counter

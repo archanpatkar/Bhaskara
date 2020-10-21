@@ -224,7 +224,10 @@ class Parser:
         return DecApply(dec,[base])
 
     def parseFunction(self):
-        self.tokenizer.consume()
+        tok = self.tokenizer.consume()
+        scope = "def"
+        if tok.type == "DYN":
+            scope = "dyn"
         name = None
         params = []
         if self.tokenizer.peek().type == "IDEN":
@@ -253,7 +256,7 @@ class Parser:
             body = self.exp(0)
         else:
             self.error(current,"Expected `=` or block")
-        return Func(name, params, body)
+        return Func(name, params, body, scope)
 
     def parseCurl(self):
         self.tokenizer.consume()
@@ -405,7 +408,7 @@ class Parser:
             return self.parseFor()
         elif current.type == "WHILE":
             return self.parseWhile()
-        elif current.type == "DEF":
+        elif current.type == "DEF" or current.type == "DYN":
             return self.parseFunction()
         elif current.type == "LCURL":
             return self.parseCurl()

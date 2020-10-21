@@ -13,10 +13,7 @@ from error import lexing_error, topo_loc
 
 # Make the tokenizer lazy, implementing defering the creation of tokens until needed
 
-# Add embedded S-expression pre-parsing support at the lexer level which will lead to
-# potentially endless possibilities for creating DSLs(without using the tokenization of 
-# the language itself).
-
+# Add embedded S-expression pre-parsing support at the lexer level
 def isWhite(str):
     if str in white:
         return True

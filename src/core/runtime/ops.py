@@ -17,7 +17,8 @@ biopmap = {
     "EXP": math.pow,
     "LPIPE": lambda x,y: y(x),
     "RPIPE": lambda x,y: x(y),
-    "RANGE": lambda x,y: list(range(x,y))
+    "RANGE": lambda x,y: list(range(x,y)),
+    "SHIFT": lambda f1,f2: lambda *params: f2(f1(*params))
 }
 
 unopmap = {

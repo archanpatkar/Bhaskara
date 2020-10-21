@@ -63,6 +63,8 @@ writer(ch1,100)
         3. Wildcard based
 * Functions
     * Normal functions
+        1. Lexically Scoped
+        2. Dynamically Scoped
     * Lambdas and Closures
     * Decorators
 * Object
@@ -96,7 +98,7 @@ writer(ch1,100)
 * RegExp Literals
 * Proxy and AOP (Sugar syntax based on AOP for DbC - Design by Contract e.g preconditions, postconditions etc.)
 * Monadic bind operator and Do notation
-* Dynamically scoped functions/thunks and call by name eval strategy for thunks
+* Dynamically scoped thunks(delayed expressions) and call by name eval strategy for thunks
 * Coroutines, async-await(more specific form of do notation?) and First Class Continuations?
 * Homoiconic transforms
 * Lisp style Macros

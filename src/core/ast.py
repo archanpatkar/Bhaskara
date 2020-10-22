@@ -105,4 +105,9 @@ def Match(obj,cases):
     counter += 1
     return Object().update({ "id": counter, "type":"Match", "obj":obj , "cases":cases})
 
+def ListComp(exp,lists,conds):
+    global counter
+    counter += 1
+    return Object().update({ "id": counter, "type":"ListComp", "exp":exp , "lists":lists, "conds":conds})
+
 # Add Sum types etc.

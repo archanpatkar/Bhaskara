@@ -101,6 +101,8 @@ class Parser:
         self.tokenizer.ignore(False)
         return out
 
+    
+
     def parseIF(self):
         self.tokenizer.consume()
         cond = self.exp(0)
@@ -318,9 +320,22 @@ class Parser:
             elif current.type == "OR" and not(comp):
                 self.tokenizer.consume()
                 comp = True
-
+                break
+        if comp:
+            lc = []
+            conds = []
+            current = self.tokenizer.peek()
+            while current.type != "RSQB":
+                curr = self.exp(0)
+                if curr["type"] == "Binary" and curr["op"] == "CONST":
+                    lc.append(curr)
+                else: conds.append(curr)
+                current = self.tokenizer.peek()
+            l = ListComp(l,lc,conds)
+        else:
+            l = List(l)
         self.expect("RSQB", "Expected `[`")
-        return List(l)
+        return l
 
     def parseLazy(self):
         self.tokenizer.consume()
@@ -389,6 +404,16 @@ class Parser:
         self.tokenizer.ignore(False)
         return exp
 
+    def parseQuotation(self):
+        self.tokenizer.consume()
+        ins = []
+        while (current := self.tokenizer.peek()).type != "QUOE":
+            if current.type == "LINEEND": self.tokenizer.consume()
+            else: ins.append(self.exp(0))
+        if len(ins) == 1: ins = ins[0]
+        self.expect("QUOE","Expected end quotation `@>`")
+        return Literal(ins)
+
     # Make this hashed(dict) based and dynamic according to the token type
     # For both the term(prefix), exp(infix) also add support for postfix in exp
     # Will load on the fly from the parser.json file
@@ -400,6 +425,8 @@ class Parser:
             return self.unary()
         elif current.type == 'LPAREN':
             return self.parenExp()
+        elif current.type == "QUOS":
+            return self.parseQuotation()
         elif current.type == "IF":
             return self.parseIF()
         elif current.type == "MATCH":
@@ -424,6 +451,8 @@ class Parser:
             return self.parseDecorator()
         elif current.type == "EXISTS":
             return self.parseSexpr()
+        elif current.type == "ENUM":
+            pass
         elif current.type == "IDEN":
             return Atom(self.tokenizer.consume().val)
         elif current.type == "NUM" or current.type == "BOOL" or current.type == "STR":
@@ -431,7 +460,7 @@ class Parser:
         else:
             self.error(current,"Unexpected token `{}`".format(current.val))
 
-    def exp(self, min):
+    def exp(self, min=0):
         lhs = self.term()
         lookahead = self.tokenizer.peek()
         # print(self.tokenizer.tokens)

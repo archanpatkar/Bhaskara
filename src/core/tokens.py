@@ -11,7 +11,7 @@ keywords = [
                 "else","def","unit","do","while","for","in","match","quote",
                 "macro", "unquote", "lazy","force","assert","go","break","continue",
                 "type","do","elif","panic","when","type","with","to","yield","dyn",
-                "is","class"
+                "is","class","enum"
         ]
 white = [" ","\r","\t"]
 digits = ["0","1","2","3","4","5","6","7","8","9"]
@@ -22,14 +22,15 @@ lineend = ["\n",";"]
 double = {
     "=":["=",">"],
     ">":["=",">"],
-    "<":["=","|","-"],
+    "<":["=","|","-","@"],
     "~":"=",
     "-":">",
     ":":"=",
     "|":">",
     "*":"*",
     "?":".",
-    ".":"."
+    ".":".",
+    "@":">"
 }
 
 token_name = {
@@ -74,6 +75,7 @@ token_name = {
     "go":"GO",
     "with":"WITH",
     "dyn":"DYN",
+    "enum":"ENUM",
     "!":"FORCE",
     "!!": "ASSERT",
     ",":"SEP",
@@ -82,6 +84,8 @@ token_name = {
     "#":"EXISTS",
     "[":"LSQB",
     "]":"RSQB",
+    "<@":"QUOS",
+    "@>":"QUOE",
     "{":"LCURL",
     "}":"RCURL",
     "$":"EMBED",

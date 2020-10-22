@@ -73,13 +73,11 @@ class Thunk():
 def evalLazy(ast, env):
     return Thunk(ast["exp"], env)
 
-
 def evalForce(ast, env):
     exp = eval(ast["exp"], env)
     if isinstance(exp, Thunk):
         return exp()
     return exp
-
 
 def evalBlock(ast, env):
     outcome = []

@@ -62,10 +62,9 @@ writer(ch1,100)
         2. Variable based
         3. Wildcard based
 * Functions
-    * Normal functions
-        1. Lexically Scoped
+    * Functions and Lambdas 
+        1. Lexically Scoped (with Closures)
         2. Dynamically Scoped
-    * Lambdas and Closures
     * Decorators
 * Object
     * Object literals
@@ -81,6 +80,7 @@ writer(ch1,100)
     * `go` expression returns an Async Future/Promise which is fulfilled with the return value of routine
     * `channel` currently supported through objects(will give syntactic support through operator overloading in the future)
 * Lazy expressions are supported
+* Basic Code Quotations
 * Embedded S-Expression support
     * Allowed to pass around as literals
     * Working on allowing templatization

@@ -11,7 +11,7 @@ keywords = [
                 "else","def","unit","do","while","for","in","match","quote",
                 "macro", "unquote", "lazy","force","assert","go","break","continue",
                 "type","do","elif","panic","when","type","with","to","yield","dyn",
-                "is","class","enum"
+                "is","class","enum","tailrec", "codef", "codyn"
         ]
 white = [" ","\r","\t"]
 digits = ["0","1","2","3","4","5","6","7","8","9"]
@@ -19,7 +19,7 @@ lineend = ["\n",";"]
 
 # Create the double dict on the fly after loading the json 
 # from the compound ops field 
-double = {
+compop = {
     "=":["=",">"],
     ">":["=",">"],
     "<":["=","|","-","@"],
@@ -76,6 +76,7 @@ token_name = {
     "with":"WITH",
     "dyn":"DYN",
     "enum":"ENUM",
+    "tailrec": "TAILREC",
     "!":"FORCE",
     "!!": "ASSERT",
     ",":"SEP",
@@ -108,7 +109,8 @@ binaryops = [
                 "ADD","SUBS","DIV","MUL","EXP","OR","AND",
                 "LT","GT","EQ","IMP","NOTEQ","LTEQ","GTEQ",
                 "VAR","ASGN","LPIPE","RPIPE","DOT","OPDOT",
-                "NULLISH","LPAREN","LSQB","MOD","RANGE","IS"
+                "NULLISH","LPAREN","LSQB","MOD","RANGE","IS",
+                "TEMP"
             ]
 unaryops = ["SUBS","ADD","NOT","ASSERT","PANIC"]
 Token = namedtuple("Token",["type","val","line","col"])

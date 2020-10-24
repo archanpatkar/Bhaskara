@@ -178,7 +178,7 @@ class Tokenizer:
         return False
 
     def multiCharOps(self):
-        # Parse arbitarily complex n char ops defined from the double dict in the tokes
+        # Parse arbitarily complex n char ops defined from the compop dict in the tokes
         pass
 
     def makeTok(self,name,ch):
@@ -213,9 +213,9 @@ class Tokenizer:
                 break
             elif c in ops:
                 done = False
-                if c in double:
-                    if isinstance(double[c], list):
-                        for ch in double[c]:
+                if c in compop:
+                    if isinstance(compop[c], list):
+                        for ch in compop[c]:
                             if self.isNext(ch):
                                 done = True
                                 self.current += 1
@@ -224,7 +224,7 @@ class Tokenizer:
                                 self.makeTok(token_name[n], n)
                                 self.current += 1
                                 break
-                    elif self.isNext(double[c]):
+                    elif self.isNext(compop[c]):
                         done = True
                         self.current += 1
                         n = c+self.str[self.current]

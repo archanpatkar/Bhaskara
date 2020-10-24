@@ -45,7 +45,8 @@ prectable = {
     "DOT": (9, 1),
     "LSQB": (9, 1),
     "OPDOT": (9, 1),
-    "LPAREN": (10,1)
+    "LPAREN": (10,1),
+    "TEMP": (10,1)
 }
 
 class Parser:
@@ -427,6 +428,8 @@ class Parser:
             return self.parenExp()
         elif current.type == "QUOS":
             return self.parseQuotation()
+        elif current.type == "TEMP":
+            pass
         elif current.type == "IF":
             return self.parseIF()
         elif current.type == "MATCH":
@@ -473,6 +476,8 @@ class Parser:
                 lhs = self.parseApp(lhs)
             elif op.type == "LSQB":
                 lhs = self.parseAcc(lhs)
+            elif op.type == "TEMP":
+                lhs = self.parseInfixApp(lhs)
             else:
                 snd = self.exp(n)
                 if snd: lhs = BinOp(op.type, lhs, snd)

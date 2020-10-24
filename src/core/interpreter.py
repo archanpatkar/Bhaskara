@@ -1,5 +1,4 @@
 # !! Improvements needed
-# Maybe refactor to CPS style
 # Code smell very bad
 # No concretely defined abstractions
 # Ad-hoc evaluation
@@ -14,6 +13,7 @@ from runtime.env import Env, std_env
 from protocol import overload_sig
 
 
+# Currently refactoring to CPS style
 # Dependancies
 ROOT = std_env()
 GLOBAL_POOL = Pool(daemon=False)
@@ -70,16 +70,16 @@ class Thunk():
 # def evalAsync(ast, env, cont):
 #     pass
 
-def evalLazy(ast, env):
+def evalLazy(ast, env, abort, next):
     return Thunk(ast["exp"], env)
 
-def evalForce(ast, env):
+def evalForce(ast, env, abort, next):
     exp = eval(ast["exp"], env)
     if isinstance(exp, Thunk):
         return exp()
     return exp
 
-def evalBlock(ast, env):
+def evalBlock(ast, env, abort, next):
     outcome = []
     for exp in ast["exp"]:
         temp = eval(exp, env)
@@ -88,7 +88,7 @@ def evalBlock(ast, env):
         return outcome[-1]
 
 
-def defFunction(ast, env):
+def defFunction(ast, env, abort, next):
     f = None
     if ast["scope"] == "dyn":
         f = BFunction(ast["params"], ast["body"], ast["name"], None)
@@ -99,7 +99,7 @@ def defFunction(ast, env):
     return f
 
 
-def evalMatch(ast, env):
+def evalMatch(ast, env, abort, next):
     obj = eval(ast["obj"], env)
     for case in ast["cases"]:
         if eval(case[0], env) == obj:
@@ -110,7 +110,7 @@ def evalMatch(ast, env):
     return None
 
 
-def evalApply(ast, env):
+def evalApply(ast, env, abort, next):
     obj = None
     func = eval(ast["iden"], env)
     if (not callable(func)) and (not (isinstance(func, dict) or isinstance(func, Object)) and func.get(overload_sig["CALL"]) == None):
@@ -129,7 +129,7 @@ def evalApply(ast, env):
                 return func(*params, this=obj, dyn=env)
             return func(*params, dyn=env)
 
-def evalDecApply(ast, env):
+def evalDecApply(ast, env, abort, next):
     func = eval(ast["iden"], env)
     if not callable(func):
         print("Function required")
@@ -142,7 +142,7 @@ def evalDecApply(ast, env):
     return r
 
 
-def evalGo(ast, env):
+def evalGo(ast, env, abort, next):
     func = eval(ast["ap"]["iden"], env)
     if not callable(func):
         print("Function required")
@@ -154,7 +154,7 @@ def evalGo(ast, env):
     return o
 
 
-def evalWhile(ast, env):
+def evalWhile(ast, env, abort, next):
     cond = eval(ast["cond"], env)
     out = None
     while cond:
@@ -163,7 +163,7 @@ def evalWhile(ast, env):
     return out
 
 
-def evalFor(ast, env):
+def evalFor(ast, env, abort, next):
     t = Env(outer=env)
     iter = eval(ast["iter"], env)
     out = None
@@ -175,18 +175,18 @@ def evalFor(ast, env):
     return out
 
 
-def evalCond(ast, env):
+def evalCond(ast, env, abort, next):
     if eval(ast["cond"], env):
         return eval(ast["b1"], env)
     elif ast["b2"] != None:
         return eval(ast["b2"], env)
 
 
-def defList(ast, env):
+def defList(ast, env, abort, next):
     return [eval(e, env) for e in ast["con"]]
 
 
-def defObject(ast, env):
+def defObject(ast, env, abort, next):
     obj = Object()
     for e in ast["kv"]:
         if isinstance(e[0], str) or e[0]["type"] == "Atom":
@@ -199,24 +199,23 @@ def defObject(ast, env):
                     key: eval(e[1], env)
                 })
         else:
-            print("Expected identifier or string")
-            sys.exit(1)
+            abort("Expected identifier or string")
     return obj
 
 
-def evalSAcc(ast, env):
+def evalSAcc(ast, env, abort, next):
     obj = eval(ast["iden"], env)
     return obj[eval(ast["index"], env)]
 
 
-def evalUnOp(ast, env):
+def evalUnOp(ast, env, abort, next):
     if ast["op"] == "PANIC":
         print(eval(ast["right"], env))
         sys.exit(1)
     return unopmap[ast["op"]](eval(ast["right"], env))
 
 
-def evalAssign(ast, env):
+def evalAssign(ast, env, abort, next):
     name = ast["left"]
     if (isinstance(name, dict) or isinstance(name, Object)) and name["type"] == "SAcc":
         obj = eval(name["iden"], env)
@@ -239,7 +238,7 @@ def evalAssign(ast, env):
         return val
 
 
-def evalDot(ast, env):
+def evalDot(ast, env, abort, next):
     obj = eval(ast["left"], env)
     if ast["right"]["type"] == "Apply":
         func = obj[ast["right"]["iden"]["value"]]
@@ -255,7 +254,7 @@ def evalDot(ast, env):
         return obj[index]
 
 
-def evalOpDot(ast, env):
+def evalOpDot(ast, env, abort, next):
     obj = eval(ast["left"], env)
     if ast["right"]["type"] == "Apply":
         func = obj.get(ast["right"]["iden"]["value"])
@@ -273,7 +272,7 @@ def evalOpDot(ast, env):
         return False
 
 
-def evalBinOp(ast, env):
+def evalBinOp(ast, env, abort, next):
     if ast["op"] == "VAR":
         name = ast["left"]["value"]
         val = eval(ast["right"], env)
@@ -316,25 +315,32 @@ eval_map = {
     "SAcc":evalSAcc
 }
 
-def eval(ast, env=ROOT):
+def I(x): return x
+def Error(msg):
+    if(isinstance(msg,Object)):
+        pass
+    else:
+        print(msg)
+        sys.exit(1)
+
+def eval(ast, env=ROOT, abort=Error, next=I):
     if isinstance(ast, list):
         outcome = []
         for exp in ast:
-            outcome.append(eval(exp, env))
-        return outcome
+            outcome.append(eval(exp, env, abort, next))
+        return next(outcome)
     elif isinstance(ast, dict) or isinstance(ast, Object):
         if ast["type"] == "Lit":
-            return ast["val"]
+            return next(ast["val"])
         elif ast["type"] == "SExpr":
-            return ast["l"]
+            return next(ast["l"])
         elif ast["type"] == "Atom":
-            return env[ast["value"]]
+            return next(env[ast["value"]])
         else:
-            func = eval_map.get(ast["type"])
-            if func: return func(ast,env)
+            eval_func = eval_map.get(ast["type"])
+            if eval_func: 
+                return eval_func(ast, env, abort, next)
             else:
-                print("Unrecognizable AST Node")
-                sys.exit(1)
+                abort("Unrecognizable AST Node")
     else:
-        print("Unrecognizable AST Node")
-        sys.exit(1)
+        abort("Unrecognizable AST Node")

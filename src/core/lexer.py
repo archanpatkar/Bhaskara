@@ -148,6 +148,10 @@ class Tokenizer:
             lexing_error(topo_loc(self.lines[self.lineno-1],self.lineno,self.colno,'Unmatched string quote'))
         self.makeTok("STR", buff)
 
+    def parseTemplate(self):
+        # Placeholder
+        buff = ""
+
     def handleComment(self):
         self.current += 2
         c = self.str[self.current]
@@ -194,6 +198,11 @@ class Tokenizer:
                 self.colno = 1
             elif c == '"' or c == "'":
                 self.parseString()
+                self.current += 1
+                self.colno += 1
+                break
+            elif c == "`":
+                self.parseTemplate()
                 self.current += 1
                 self.colno += 1
                 break

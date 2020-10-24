@@ -4,7 +4,7 @@ from collections import namedtuple
 ops = [
         "+","-","/","*","(",")","^","=","|","&","~","@",
         "#",">","<","[","]","{","}",",","%","!",":",
-        "$","'",'"',".","?"
+        "$","'",'"',".","?","`"
     ]
 keywords = [
                 "T","F","N","B","true","false","neither","both","if","then",
@@ -101,7 +101,8 @@ token_name = {
     "?.":"OPDOT",
     ":":"COLON",
     "??":"NULLISH",
-    "..":"RANGE"
+    "..":"RANGE",
+    "`":"TEMP"
 }
 binaryops = [
                 "ADD","SUBS","DIV","MUL","EXP","OR","AND",

@@ -52,7 +52,7 @@ writer(ch1,100)
 ```
 
 ## Currently supports
-> The codebase is under heavy developement(in a primitive quality state) and constantly updated
+> The codebase is under heavy developement(Features may break) and constantly updated
 * Control Flow
     * if-elif-else
     * for loop
@@ -81,6 +81,7 @@ writer(ch1,100)
     * `channel` currently supported through objects(will give syntactic support through operator overloading in the future)
 * Lazy expressions are supported
 * Basic Code Quotations
+* Haskell style List Comprehensions (WIP - alpha)
 * Embedded S-Expression support
     * Allowed to pass around as literals
     * Working on allowing templatization
@@ -89,17 +90,18 @@ writer(ch1,100)
 > This also includes long term goals
 * Multiple prioritized inheritance & Sender path tie breaker resolution
 * Sum types (Disjoint union types)
+* First Class Continuations
+* Exception Handling
 * Module system
 * Tail call optimization
 * Optimized Goroutine scheduler
 * String templates and Tagged string literals
 * Scala like `_` based lambda literal sugar
-* Haskell style List Comprehensions
 * RegExp Literals
 * Proxy and AOP (Sugar syntax based on AOP for DbC - Design by Contract e.g preconditions, postconditions etc.)
 * Monadic bind operator and Do notation
 * Dynamically scoped thunks(delayed expressions) and call by name eval strategy for thunks
-* Coroutines, async-await(more specific form of do notation?) and First Class Continuations?
+* Coroutines, async-await(more specific form of do notation?) 
 * Homoiconic transforms
 * Lisp style Macros
 * Code quotations

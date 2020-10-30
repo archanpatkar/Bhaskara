@@ -6,10 +6,10 @@
 
 Bhaskara is an experimental interpreted object functional language focused towards extreme flexibility, expression of metalinguistic abstractions(trying to support language oriented programming) and the eventual goal of creating a powerful reflective/meta-reflective system with the capabilities of self-modifying(homoiconic) code, Aspect Oriented Programming and dynamically changing runtime semantics(by providing a Metaobject Protocol).
 
-This project serves as an explorational workbench for experimenting and testing idiosyncratic linguistic abstractions and language constructs, design patterns, dsls, runtime semantics etc. 
+This project serves as an explorational workbench for experimenting and testing idiosyncratic linguistic abstractions and language constructs, design patterns, dsls, runtime/operational semantics etc. 
 
 ##### Influenced directly or indirectly by
-Javascript, Self, F#, Python, Go, Smalltalk, OCaml, Haskell, Scala, Lisp, CLOS, Scheme, Clojure, Lua, C, Wolfram Language, Racket
+Javascript, Self, F#, Python, Go, Smalltalk, OCaml, Haskell, Kotlin, Scala, Lisp, CLOS, Scheme, Clojure, Lua, C, Wolfram Language, Racket
 
 #### Example code
 ```
@@ -52,7 +52,7 @@ writer(ch1,100)
 ```
 
 ## Currently supports
-> The codebase is under heavy developement(Features may break) and constantly updated
+> The codebase is under heavy developement(Features may break!) and constantly updated
 * Control Flow
     * if-elif-else
     * for loop
@@ -79,7 +79,7 @@ writer(ch1,100)
     * `go` syntax supported (currently assigns a thread from a thread pool)
     * `go` expression returns an Async Future/Promise which is fulfilled with the return value of routine
     * `channel` currently supported through objects(will give syntactic support through operator overloading in the future)
-* Lazy expressions are supported
+* Lazy expressions
 * Basic Code Quotations
 * Haskell style List Comprehensions (WIP - alpha)
 * Embedded S-Expression support

@@ -90,7 +90,7 @@ writer(ch1,100)
 > This also includes long term goals
 * Multiple prioritized inheritance & Sender path tie breaker resolution
 * Sum types (Disjoint union types)
-* First Class Continuations
+* First Class Continuations (call/cc)
 * Exception Handling
 * Module system
 * Tail call optimization
@@ -102,6 +102,7 @@ writer(ch1,100)
 * Monadic bind operator and Do notation
 * Dynamically scoped thunks(delayed expressions) and call by name eval strategy for thunks
 * Coroutines, async-await(more specific form of do notation?) 
+* Delimited Continuations
 * Homoiconic transforms
 * Lisp style Macros
 * Code quotations

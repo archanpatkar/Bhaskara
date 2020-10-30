@@ -12,8 +12,8 @@ from runtime.ops import biopmap, unopmap
 from runtime.env import Env, std_env
 from protocol import overload_sig
 
-
-# Currently refactoring to CPS style
+# Prev. version working now ->
+# WIP: Currently refactoring to CPS style
 # Dependancies
 ROOT = std_env()
 GLOBAL_POOL = Pool(daemon=False)
@@ -279,19 +279,18 @@ def evalBinOp(ast, env, abort, next):
         env.update({name: val})
         return val
     elif ast["op"] == "ASGN":
-        return evalAssign(ast, env)
+        return evalAssign(ast, env, abort, next)
     elif ast["op"] == "DOT":
-        return evalDot(ast, env)
+        return evalDot(ast, env, abort, next)
     elif ast["op"] == "OPDOT":
-        return evalOpDot(ast, env)
+        return evalOpDot(ast, env, abort, next)
     else:
-        left = eval(ast["left"], env)
-        right = eval(ast["right"], env)
+        left = eval(ast["left"], env, abort, next)
+        right = eval(ast["right"], env, abort, next)
         if isinstance(left, Object) and ast["op"] != "LPIPE" and ast["op"] != "RPIPE":
             f = left[overload_sig[ast["op"]]]
             if not callable(f):
-                print("Function required")
-                sys.exit(1)
+                abort("Function required")
             r = f(right, this=left)
             return r
         return biopmap[ast["op"]](left, right)
@@ -339,7 +338,7 @@ def eval(ast, env=ROOT, abort=Error, next=I):
         else:
             eval_func = eval_map.get(ast["type"])
             if eval_func: 
-                return eval_func(ast, env, abort, next)
+                return next(eval_func(ast, env, abort, next))
             else:
                 abort("Unrecognizable AST Node")
     else:

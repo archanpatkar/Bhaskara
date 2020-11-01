@@ -98,7 +98,8 @@ writer(ch1,100)
 * String templates and Tagged string literals
 * Scala like `_` based lambda literal sugar
 * RegExp Literals
-* Proxy and AOP (Sugar syntax based on AOP for DbC - Design by Contract e.g preconditions, postconditions etc.)
+* Proxy and AOP 
+* Syntactic and semantics support for Design by Contract(which is inspired Hoare Triples) e.g preconditions, postconditions.
 * Monadic bind operator and Do notation
 * Dynamically scoped thunks(delayed expressions) and call by name eval strategy for thunks
 * Coroutines, async-await(more specific form of do notation?) 

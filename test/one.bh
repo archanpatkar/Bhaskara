@@ -54,6 +54,8 @@ def sum() {
     acc
 }
 
+[ x*2, y+5 | x <- range(0,20), x + 1 % 2, y <- range(0,30)]
+
 sum(1,2,3,4,5,6,7,8,9) |> print
 
 l1[0] = -1
@@ -146,6 +148,7 @@ test4(2)
 
 l := lazy 5*4
 print(force l)
+print("here near fibbo")
 
 //for i in 1..15 {
   //  go fac(i) then def(v) { 
@@ -154,9 +157,14 @@ print(force l)
     //}
 //}
 
+print("here near fibbo")
 def fib(n) => match n with
                   | 0 => 0
                   | 1 => 1
+                  | _ => fib(n-1) + fib(n-2)
+
+def fib(n) => match n with
+                  | x when x <= 1 => x
                   | _ => fib(n-1) + fib(n-2)
 
 print <| "Fibonacci Seq:"
@@ -220,15 +228,18 @@ print(obj1 + 11)
 obj1()
 obj1()
 
+print("archan")
+
 a := #(
 	(defun add(x,y) (print (* (+ x y) 3)))
 	(add 10 20)
     (${lazy def(x) => x+6} 30)
 )
 
+// # + 2 * # - 4
+
 //print("------------here---------------")
 //print(a)
-
 
 // print("Before")
 // o.chain(def(f) { 

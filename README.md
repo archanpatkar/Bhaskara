@@ -20,7 +20,7 @@ pfac <- fac >> print
 for i in 1..13 do go pfac(i)
 
 def fib(n) => match n with
-                  | 0 => 1
+                  | x when x <= 1 => x
                   | _ => fib(n-1) + fib(n-2)
 
 8 |> fib |> print

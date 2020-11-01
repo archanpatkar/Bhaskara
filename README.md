@@ -99,7 +99,7 @@ writer(ch1,100)
 * Scala like `_` based lambda literal sugar
 * RegExp Literals
 * Proxy and AOP 
-* Syntactic and semantics support for Design by Contract(which is inspired Hoare Triples) e.g preconditions, postconditions.
+* Syntactic and semantic support for Design by Contract(which is inspired Hoare Triples) e.g preconditions, postconditions.
 * Monadic bind operator and Do notation
 * Dynamically scoped thunks(delayed expressions) and call by name eval strategy for thunks
 * Coroutines, async-await(more specific form of do notation?) 
